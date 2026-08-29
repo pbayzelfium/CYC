@@ -1,0 +1,35 @@
+<Configuration>
+  <!--
+    Windows Sandbox: a disposable clean Windows, ~30 seconds to boot, discarded
+    on close. Double-click this file after enabling the feature:
+
+      Enable-WindowsOptionalFeature -Online -FeatureName "Containers-DisposableClientVM" -All
+      (elevated, then reboot)
+
+    What this covers: install-from-nothing on a machine with no PowerShell 7,
+    no oh-my-posh, no profile and no fonts.
+
+    What it does NOT cover: Windows Sandbox has neither Windows Terminal nor
+    winget, so the terminal-theming step and the font install are skipped there
+    exactly as they are in CI. For those, use a second local user account on a
+    real machine - see test/README.md.
+  -->
+  <Networking>Enable</Networking>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>__REPO_PATH__</HostFolder>
+      <SandboxFolder>C:\CYC</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>__REPO_PATH__\test\results</HostFolder>
+      <SandboxFolder>C:\Results</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell -ExecutionPolicy Bypass -NoProfile -File C:\CYC\test\sandbox-bootstrap.ps1</Command>
+  </LogonCommand>
+  <MemoryInMB>4096</MemoryInMB>
+</Configuration>
+
