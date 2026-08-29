@@ -16,8 +16,17 @@ param(
     [string]$Repo   = 'pbayzelfium/CYC',
     [string]$Branch = 'main',
     [switch]$DryRun,
-    [switch]$SkipCatalogue
+    [switch]$SkipCatalogue,
+    [switch]$Force
 )
+
+# Piping into iex discards parameters, so honour environment variables too.
+# Both of these work:
+#   $env:CYC_DRYRUN=1; irm .../bootstrap.ps1 | iex
+#   & ([scriptblock]::Create((irm .../bootstrap.ps1))) -DryRun
+if ($env:CYC_DRYRUN)   { $DryRun = $true }
+if ($env:CYC_FORCE)    { $Force = $true }
+if ($env:CYC_NOCATALOGUE) { $SkipCatalogue = $true }
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -68,5 +77,7 @@ Unblock-File $dest -ErrorAction SilentlyContinue
 $argv = @()
 if ($DryRun)        { $argv += '-DryRun' }
 if ($SkipCatalogue) { $argv += '-SkipCatalogue' }
+if ($Force)         { $argv += '-Force' }
+if ($DryRun) { Write-Host "  dry run - nothing will be changed" -ForegroundColor Yellow }
 & $dest @argv
 exit $LASTEXITCODE

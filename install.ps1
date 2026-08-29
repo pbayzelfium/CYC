@@ -26,6 +26,11 @@
   Do not install the catalogue builder sources. The pre-built catalogue is
   installed either way.
 
+.PARAMETER Force
+  Re-run over an existing install. Without this, an existing install is left
+  alone: re-running replaces the prompt config with the shipped generic one,
+  which loses any personal edits.
+
 .EXAMPLE
   Works on any Windows, including one with only PowerShell 5.1:
     powershell -ExecutionPolicy Bypass -NoProfile -File install.ps1
@@ -37,6 +42,7 @@
 param(
     [switch]$DryRun,
     [switch]$SkipCatalogue,
+    [switch]$Force,
     # Testing seam: install into a throwaway directory instead of the real
     # home, and skip the network steps. See test-install.ps1.
     [string]$TestRoot
@@ -4523,6 +4529,36 @@ Write-Host ""
 Write-Host "  Terminal setup" -ForegroundColor White
 Write-Host "  ==============" -ForegroundColor DarkGray
 if ($DryRun) { Say "DRY RUN - nothing will change" Yellow }
+
+# --- do not quietly overwrite an existing install ---------------------------
+# Re-running replaces the prompt config with the shipped generic one, so a
+# personalised zelfium.omp.json loses its edits. A .bak is left, but silence
+# is the wrong default when the cost is someone's own configuration.
+$existing = @(
+    (Join-Path $Root '.oh-my-posh\palettes.json'),
+    (Join-Path $Root '.oh-my-posh\zelfium.omp.json')
+) | Where-Object { Test-Path $_ }
+
+if ($existing -and -not $Force -and -not $DryRun) {
+    $custom = $false
+    $z = Join-Path $Root '.oh-my-posh\zelfium.omp.json'
+    if (Test-Path $z) { $custom = (Get-Content $z -Raw) -match 'mapped_locations' }
+
+    Write-Host ""
+    Write-Host "  CYC is already installed here." -ForegroundColor Yellow
+    Say "found: $($existing[0])" DarkGray
+    if ($custom) {
+        Write-Host "  Your prompt config has personal edits (folder shortcuts)." -ForegroundColor Yellow
+        Write-Host "  Re-running would replace it with the generic one." -ForegroundColor Yellow
+    }
+    Write-Host ""
+    Write-Host "  To see what would change, without changing anything:" -ForegroundColor DarkGray
+    Write-Host "    -DryRun"
+    Write-Host "  To upgrade anyway (a .bak is kept beside every file it replaces):" -ForegroundColor DarkGray
+    Write-Host "    -Force"
+    Write-Host ""
+    exit 0
+}
 
 # --- 1. dependencies --------------------------------------------------------
 Step "Dependencies"

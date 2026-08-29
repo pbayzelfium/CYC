@@ -114,7 +114,8 @@ try {
         (Get-Content (Join-Path $root '.oh-my-posh\zelfium.omp.json') -Raw) -notmatch 'mapped_locations' }
 
     # --- running twice must not duplicate ------------------------------------
-    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue *>&1 | Out-Null
+    # -Force: an existing install is left alone otherwise, which is the point
+    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -Force *>&1 | Out-Null
     Check "second run does not duplicate the profile block" {
         ([regex]::Matches((Get-Content $profileFile -Raw), 'terminal-theme setup >>>').Count) -eq 1 }
     Check "second run does not duplicate schemes" {
