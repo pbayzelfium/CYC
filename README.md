@@ -60,6 +60,25 @@ It prefers `winget` and falls back to direct downloads where it can. Anything it
 cannot install is reported at the end as a warning naming what is missing and what that costs
 you — it never fails silently or leaves you guessing.
 
+## Removing it
+
+```powershell
+powershell -ExecutionPolicy Bypass -NoProfile -File ~/.oh-my-posh/uninstall.ps1 -DryRun
+pwsh -NoProfile -File ~/.oh-my-posh/uninstall.ps1
+```
+
+Takes out only what it put in: its block from your profile, its colour schemes and appearance
+keys from Windows Terminal, its `statusLine` entry from Claude, and its own files. Your
+schemes, terminal profiles, keybindings and settings stay. `-RestoreBackup` rolls those three
+files back to the `.bak` copies instead, and `-KeepDownloads` keeps the prompt designs.
+
+It leaves PowerShell 7, Windows Terminal, git, Python, the font and Terminal-Icons alone —
+they are general tools and something else may now depend on them.
+
+The test suite installs, re-installs and then uninstalls into a throwaway directory, asserting
+both that its own traces are gone and that a pre-existing profile, scheme, terminal profile,
+keybinding and Claude settings all survived.
+
 ## Options
 
 | Flag | Effect |

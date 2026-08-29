@@ -23,6 +23,7 @@ FILES = [
     (ROOT / "theme-tools.ps1",      ".oh-my-posh/theme-tools.ps1",      True),
     (CLAUDE / "statusline.ps1",     ".claude/statusline.ps1",           True),
     (CLAUDE / "commands/terminal-theme.md", ".claude/commands/terminal-theme.md", True),
+    (ROOT / "share/uninstall.ps1", ".oh-my-posh/uninstall.ps1", True),
     (ROOT / "catalogue/render-prompts.py",     ".oh-my-posh/catalogue/render-prompts.py",     False),
     (ROOT / "catalogue/subset-font.py",        ".oh-my-posh/catalogue/subset-font.py",        False),
     (ROOT / "catalogue/build-catalogue.py",    ".oh-my-posh/catalogue/build-catalogue.py",    False),

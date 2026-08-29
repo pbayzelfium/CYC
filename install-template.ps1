@@ -314,8 +314,15 @@ else {
     # a different account the per-user installer lands in the wrong profile.
     New-Item -ItemType Directory -Force $binDir | Out-Null
     $ProgressPreference = 'SilentlyContinue'
+    # An x64 binary will not run on a Surface Pro X and friends.
+    $arch = switch ($env:PROCESSOR_ARCHITECTURE) {
+        'ARM64' { 'arm64' }
+        'x86'   { '386' }
+        default { 'amd64' }
+    }
+    Say "architecture: $arch" DarkGray
     Invoke-WebRequest -UseBasicParsing `
-        -Uri 'https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-windows-amd64.exe' `
+        -Uri "https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-windows-$arch.exe" `
         -OutFile $omp
     Say "downloaded to ~\.local\bin" DarkGray
 }

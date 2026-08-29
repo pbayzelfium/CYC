@@ -123,6 +123,31 @@ try {
         ($j.schemes.name | Group-Object | Where-Object Count -gt 1).Count -eq 0 }
     Check "their content still survives a second run" {
         (Get-Content $profileFile -Raw) -match 'do not delete me' }
+
+    # --- uninstall: an uninstaller that never runs is just a promise --------
+    Write-Host ""
+    Write-Host "  Uninstall" -ForegroundColor White
+    $uninstaller = Join-Path $PSScriptRoot 'uninstall.ps1'
+    & pwsh -NoProfile -File $uninstaller -TestRoot $root *>&1 | Out-Null
+
+    Check "removed its own files"        { -not (Test-Path (Join-Path $root '.oh-my-posh')) }
+    Check "removed the status line"      { -not (Test-Path (Join-Path $root '.claude\statusline.ps1')) }
+    Check "removed the slash command"    { -not (Test-Path (Join-Path $root '.claude\commands	erminal-theme.md')) }
+    Check "removed its profile block"    {
+        (Get-Content $profileFile -Raw) -notmatch 'terminal-theme setup' }
+    Check "KEPT their profile content"   {
+        (Get-Content $profileFile -Raw) -match 'do not delete me' }
+
+    $wtj = Get-Content $wt -Raw | ConvertFrom-Json
+    Check "removed its colour schemes"   { $wtj.schemes.name -notcontains 'Catppuccin Mocha' }
+    Check "KEPT their colour scheme"     { $wtj.schemes.name -contains 'Their Scheme' }
+    Check "KEPT their terminal profile"  { $wtj.profiles.list.name -contains 'Their Shell' }
+    Check "KEPT their keybinding"        { $wtj.keybindings.id -contains 'Their.Binding' }
+    Check "reset the font"               { -not $wtj.profiles.defaults.font }
+
+    $cj = Get-Content (Join-Path $claudeDir 'settings.json') -Raw | ConvertFrom-Json
+    Check "removed the statusLine entry" { -not $cj.statusLine }
+    Check "KEPT their Claude settings"   { $cj.theirKey -eq 'keep me' -and $cj.model -eq 'opus' }
 }
 finally {
     Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue
