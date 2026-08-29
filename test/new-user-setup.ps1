@@ -68,9 +68,15 @@ Write-Host ""
 Write-Host "  Clean-user test - setup" -ForegroundColor White
 Write-Host ""
 
+$Password = "CycTest!2024"
 if (Get-LocalUser -Name $User -ErrorAction SilentlyContinue) {
     Write-Host "  account $User already exists - reusing it" -ForegroundColor DarkGray
     Write-Host "  (for a truly clean run: -Remove first, then re-run this)" -ForegroundColor DarkGray
+    # Reset it, and always print it. A half-finished earlier run can leave an
+    # account whose password was set but never shown, which looks from the
+    # lock screen like no password was ever set.
+    Set-LocalUser -Name $User -Password (ConvertTo-SecureString $Password -AsPlainText -Force)
+    Write-Host "  password reset to:     $Password" -ForegroundColor Green
 } else {
     # A password, not -NoPassword: some policies refuse to let a passwordless
     # local account sign in, which turns into a confusing dead end at the
@@ -209,4 +215,5 @@ Write-Host "       switch back to yourself, then run this elevated:"
 Write-Host ""
 Write-Host "         pwsh -File `"$PSCommandPath`" -Remove" -ForegroundColor Cyan
 Write-Host ""
+
 
