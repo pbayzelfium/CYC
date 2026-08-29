@@ -78,16 +78,39 @@ Check "Nerd Font installed" {
 # --- does the thing actually work -------------------------------------------
 Write-Host ""
 Write-Host "  Behaviour" -ForegroundColor DarkGray
-Check "profile loaded in this shell" { [bool](Get-Command Set-TerminalTheme -EA SilentlyContinue) }
-Check "theme menu works"             { [bool](Get-Command Show-TerminalThemes -EA SilentlyContinue) }
-Check "installer command works"      { [bool](Get-Command Install-TerminalTheme -EA SilentlyContinue) }
 
-if (Get-Command Set-TerminalTheme -EA SilentlyContinue) {
-    Check "switching theme works" {
-        Set-TerminalTheme gruvbox-dark | Out-Null
-        $now = (Get-TerminalTheme).Scheme
-        Set-TerminalTheme catppuccin-mocha | Out-Null
-        $now -eq 'Gruvbox Dark' }
+# This script is meant to be run with -NoProfile, so the profile's commands are
+# deliberately absent HERE. Ask a child shell that does load the profile, which
+# is what a real terminal window will be.
+$probe = & pwsh -NoLogo -Command @'
+$r = [ordered]@{
+  profile = [bool](Get-Command Set-TerminalTheme -EA SilentlyContinue)
+  menu    = [bool](Get-Command Show-TerminalThemes -EA SilentlyContinue)
+  install = [bool](Get-Command Install-TerminalTheme -EA SilentlyContinue)
+  switch  = $false
+}
+if ($r.profile) {
+  try {
+    Set-TerminalTheme gruvbox-dark | Out-Null
+    $was = (Get-TerminalTheme).Scheme
+    Set-TerminalTheme catppuccin-mocha | Out-Null
+    $r.switch = ($was -eq 'Gruvbox Dark')
+  } catch { }
+}
+[pscustomobject]$r | ConvertTo-Json -Compress
+'@ 2>$null
+
+$p = $null
+try { $p = ($probe | Select-Object -Last 1) | ConvertFrom-Json } catch { }
+
+if (-not $p) {
+    Write-Host "  FAIL  could not start a profile-loading shell" -ForegroundColor Red
+    $fail++
+} else {
+    Check "profile loads in a new shell" { $p.profile }.GetNewClosure()
+    Check "theme menu available"         { $p.menu }.GetNewClosure()
+    Check "installer command available"  { $p.install }.GetNewClosure()
+    Check "switching theme works"        { $p.switch }.GetNewClosure()
 }
 
 $omp = "$HOME\.local\bin\oh-my-posh.exe"
