@@ -13,7 +13,7 @@
   This only creates the account and copies files. Nothing is installed here.
 
 .PARAMETER User
-  Account name. Default cyctest.
+  Account name. Default Testing.
 
 .PARAMETER Remove
   Delete the account and its profile instead. Run this when you are finished.
@@ -25,7 +25,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$User = 'cyctest',
+    [string]$User = 'Testing',
     [switch]$Remove
 )
 
@@ -115,3 +115,4 @@ Write-Host "    7. Sign out of $User, sign back in as yourself, then run this el
 Write-Host ""
 Write-Host "         pwsh -File `"$PSCommandPath`" -Remove" -ForegroundColor Cyan
 Write-Host ""
+
