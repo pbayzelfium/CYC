@@ -27,8 +27,11 @@
   installed either way.
 
 .EXAMPLE
-  pwsh -NoProfile -File install.ps1
-  pwsh -NoProfile -File install.ps1 -DryRun
+  Works on any Windows, including one with only PowerShell 5.1:
+    powershell -ExecutionPolicy Bypass -NoProfile -File install.ps1
+
+  If you already have PowerShell 7:
+    pwsh -NoProfile -File install.ps1 -DryRun
 #>
 [CmdletBinding()]
 param(
@@ -4474,7 +4477,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     if (-not (Test-Path $pwsh)) { Write-Host "  PowerShell 7 still not found." -ForegroundColor Red; exit 1 }
 
     Say "restarting in PowerShell 7..." Green
-    $argv = @('-NoProfile', '-File', $PSCommandPath)
+    $argv = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath)
     if ($DryRun)        { $argv += '-DryRun' }
     if ($SkipCatalogue) { $argv += '-SkipCatalogue' }
     if ($TestRoot)      { $argv += @('-TestRoot', $TestRoot) }

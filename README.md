@@ -4,8 +4,12 @@ One command turns a bare Windows Terminal into a themed one, with a prompt, matc
 schemes, and a Claude Code status line that follows whichever theme is active.
 
 ```powershell
-pwsh -NoProfile -File install.ps1
+powershell -ExecutionPolicy Bypass -NoProfile -File install.ps1
 ```
+
+`powershell` — not `pwsh`. It is on every Windows, whereas `pwsh` is what this installs.
+`-ExecutionPolicy Bypass` is needed because Windows blocks downloaded scripts by default.
+Once it is running it installs PowerShell 7 and restarts itself there.
 
 ## What you get
 
