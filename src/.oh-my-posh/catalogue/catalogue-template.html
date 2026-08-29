@@ -1,0 +1,702 @@
+<title>Theme Catalogue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+/* The Nerd Font glyphs, subset to just what these previews use and embedded.
+   Relying on the reader's installed font left every icon as a box, because the
+   artifact viewer does not grant a page access to local fonts. */
+@font-face {
+  font-family: "CatalogueMono";
+  src: url(data:font/woff2;base64,__FONT__) format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --ground:#13131c; --panel:#1a1a26; --edge:#2a2a3c;
+  --ink:#cdd6f4; --ink-soft:#a6adc8; --muted:#7f849c;
+  --accent:#cba6f7; --signal:#94e2d5;
+  --shadow:0 24px 60px -26px rgba(0,0,0,.8);
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+  --mono:"CatalogueMono","JetBrainsMono NF","JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ground:#f2f1f6; --panel:#fff; --edge:#dcdae6;
+    --ink:#292540; --ink-soft:#4c4767; --muted:#6f6a88;
+    --accent:#8839ef; --signal:#179299;
+    --shadow:0 18px 46px -26px rgba(40,30,80,.4);
+  }
+}
+:root[data-theme="light"] {
+  --ground:#f2f1f6; --panel:#fff; --edge:#dcdae6;
+  --ink:#292540; --ink-soft:#4c4767; --muted:#6f6a88;
+  --accent:#8839ef; --signal:#179299;
+  --shadow:0 18px 46px -26px rgba(40,30,80,.4);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:108px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 24px}
+
+.mast{padding:56px 0 8px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+h1{font-size:clamp(30px,4.6vw,46px);line-height:1.05;font-weight:600;letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance}
+.lede{font-size:17px;color:var(--ink-soft);max-width:64ch;margin:0}
+.lede a,.sub a{color:var(--accent)}
+
+h2{font-size:12.5px;font-family:var(--mono);font-weight:500;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin:60px 0 6px}
+.sub{color:var(--muted);margin:0 0 22px;max-width:66ch;font-size:14.5px}
+
+/* ---------- the big terminal ---------- */
+.term{border-radius:11px;overflow:hidden;border:1px solid var(--edge);box-shadow:var(--shadow);margin-bottom:26px}
+.term-tabs{display:flex;padding:7px 9px 0;gap:4px;font-family:var(--mono);font-size:11.5px}
+.term-tab{padding:6px 18px;border-radius:7px 7px 0 0}
+.term-tab.off{opacity:.4}
+.term-body{padding:20px 22px 22px;overflow-x:auto;font-family:var(--mono);font-size:15px;line-height:1.8}
+/* Fixed floor so the control bar below never shifts: prompt designs run from
+   one to four lines, and without this the arrows move under the cursor. */
+#designBody{min-height:592px}
+#themeBody{min-height:674px}
+.term-body::-webkit-scrollbar{height:6px}
+.term-body::-webkit-scrollbar-thumb{background:#ffffff30;border-radius:3px}
+.stage-prompt{white-space:pre;overflow-x:auto;overflow-y:hidden}
+.typed{opacity:.95;margin-top:2px}
+.term-bar{display:flex;align-items:center;gap:9px;margin:-16px 0 26px;flex-wrap:wrap}
+.step{appearance:none;width:31px;height:31px;flex:none;border-radius:7px;border:1px solid var(--edge);
+  background:var(--panel);color:var(--ink-soft);cursor:pointer;font:inherit;font-size:15px;line-height:1;padding:0}
+.step:hover{color:var(--ink);border-color:var(--muted)}
+.step:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.term-name{font-family:var(--mono);font-size:12px;color:var(--muted);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.showin{appearance:none;font:inherit;font-size:12.5px;padding:7px 13px;border-radius:7px;flex:none;
+  border:1px solid var(--edge);background:var(--panel);color:var(--ink-soft);cursor:pointer}
+.showin:hover{color:var(--ink);border-color:var(--muted)}
+.showin:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@keyframes flash{0%,100%{box-shadow:0 0 0 1px var(--accent)}
+                 50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 40%,transparent)}}
+.card.flash{animation:flash 1s ease 2}
+
+/* sample session output inside a preview */
+.sample{margin-top:14px;white-space:pre;opacity:.96}
+
+/* claude status line inside the theme stage */
+.sl{margin-top:20px;padding-top:14px;border-top:1px dashed;font-size:12.5px;line-height:2;white-space:pre}
+.bar-cells{display:inline-flex;gap:2px;vertical-align:-1px;margin-right:.5em}
+.bar-cells i{width:6px;height:12px;border-radius:1px;display:block}
+
+/* ---------- filter bar ---------- */
+.filters{display:flex;gap:9px;flex-wrap:wrap;align-items:center;
+  padding:11px 0;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge)}
+.search{flex:1 1 200px;min-width:160px;font:inherit;font-size:14px;padding:8px 12px;border-radius:7px;
+  border:1px solid var(--edge);background:var(--panel);color:var(--ink)}
+.search:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{appearance:none;font:inherit;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  padding:6px 11px;border-radius:999px;border:1px solid var(--edge);background:transparent;color:var(--muted);cursor:pointer}
+.chip:hover{color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--ground);font-weight:500}
+.count{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:auto}
+
+/* ---------- brightness / saturation ---------- */
+.adjust{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:12px 0 2px;font-size:12.5px;color:var(--muted)}
+.adjust label{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.04em;text-transform:uppercase}
+.adjust input[type=range]{width:150px;accent-color:var(--accent);cursor:pointer}
+.adjust input[type=range]:disabled{opacity:.35;cursor:default}
+.adjust output{font-family:var(--mono);font-size:11.5px;color:var(--ink);min-width:34px;
+  text-align:right;font-variant-numeric:tabular-nums}
+.adjust .hint{flex:1;min-width:200px;text-align:right;font-size:12px}
+
+/* ---------- picker cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px;margin-top:16px}
+.card{appearance:none;font:inherit;color:inherit;text-align:left;padding:0;overflow:hidden;
+  border:1px solid var(--edge);border-radius:9px;background:var(--panel);cursor:pointer;
+  transition:border-color .15s,transform .15s}
+.card:hover{transform:translateY(-2px)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card .prompt{font-family:var(--mono);font-size:12px;line-height:1.75;white-space:pre;
+  overflow:hidden;padding:13px;min-height:66px;
+  -webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent)}
+.swatches{display:flex;height:5px}
+.swatches i{flex:1;display:block}
+.cfoot{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:8px 13px;border-top:1px solid var(--edge)}
+.cname{font-family:var(--mono);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cname.sans{font-family:var(--sans);font-size:13.5px;font-weight:500}
+.tags{display:flex;gap:4px;flex:none}
+.tags span{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--edge);border-radius:999px;padding:2px 6px;white-space:nowrap}
+.empty{color:var(--muted);padding:30px 0;font-size:15px}
+
+/* ---------- command bar ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--edge)}
+.bar-in{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.picked{flex:1 1 300px;min-width:0;font-size:13.5px;color:var(--ink-soft)}
+.picked b{color:var(--ink);font-weight:500}
+.cmds{font-family:var(--mono);font-size:12.5px;color:var(--signal);white-space:pre-wrap;word-break:break-all;margin-top:3px}
+.actions{display:flex;gap:8px;flex:none}
+button.go{appearance:none;font:inherit;font-size:13.5px;font-weight:500;padding:9px 18px;border-radius:7px;
+  border:1px solid var(--accent);background:var(--accent);color:var(--ground);cursor:pointer}
+button.ghost{appearance:none;font:inherit;font-size:13.5px;padding:9px 14px;border-radius:7px;
+  border:1px solid var(--edge);background:transparent;color:var(--ink-soft);cursor:pointer}
+button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.note{margin-top:26px;padding:14px 16px;border-left:2px solid var(--accent);background:var(--panel);
+  border-radius:0 8px 8px 0;color:var(--ink-soft);font-size:14px}
+.note code{font-family:var(--mono);font-size:12.5px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+
+<script id="THEMES" type="application/json">__THEMES__</script>
+<script id="DESIGNS" type="application/json">__DESIGNS__</script>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1>Theme Catalogue</h1>
+    <p class="lede">Every design rendered against the same short git repository, so what differs between these is the design and not the context. Pick a theme, pick a prompt, copy the commands. The settings behind them live in the <a href="https://claude.ai/code/artifact/b249684e-4846-4ca4-9487-4770ef534887">Terminal Control Room</a>.</p>
+  </header>
+
+  <h2>Themes</h2>
+  <p class="sub">A theme moves everything at once — window background, the 16 ANSI colours, the prompt, and the Claude Code status line. This is the full window, including the status line as it will look.</p>
+
+  <div class="term" id="themeStage">
+    <div class="term-tabs" id="themeTabs">
+      <div class="term-tab on" id="themeTabOn">PowerShell</div>
+      <div class="term-tab off">Git Bash</div>
+    </div>
+    <div class="term-body" id="themeBody">
+      <div class="sample" id="themeSample"></div>
+      <div class="stage-prompt" id="themePrompt"></div>
+      <div class="sl" id="themeStatus"></div>
+    </div>
+  </div>
+  <div class="term-bar">
+    <button class="step" id="themePrev" type="button" aria-label="Previous theme">‹</button>
+    <button class="step" id="themeNext" type="button" aria-label="Next theme">›</button>
+    <span class="term-name" id="themeName"></span>
+    <button class="showin" id="themeShow" type="button">Show in list</button>
+  </div>
+
+  <div class="filters">
+    <input class="search" id="tq" type="search" placeholder="Search themes…" aria-label="Search themes">
+    <div class="chips" id="tchips"></div>
+    <span class="count" id="tcount"></span>
+  </div>
+  <div class="grid" id="themes"></div>
+  <p class="empty" id="tempty" hidden>No theme matches those filters.</p>
+
+  <h2>Prompt designs</h2>
+  <p class="sub">A design changes the prompt line only and carries its own colours, so it can clash on a mismatched background. This preview sits on whichever theme you chose above, which is the ground it will really be drawn on.</p>
+
+  <div class="term" id="designStage">
+    <div class="term-tabs" id="designTabs">
+      <div class="term-tab on" id="designTabOn">PowerShell</div>
+      <div class="term-tab off">Git Bash</div>
+    </div>
+    <div class="term-body" id="designBody">
+      <div class="sample" id="designSample"></div>
+      <div class="stage-prompt" id="designPrompt"></div>
+    </div>
+  </div>
+  <div class="term-bar">
+    <button class="step" id="designPrev" type="button" aria-label="Previous design">‹</button>
+    <button class="step" id="designNext" type="button" aria-label="Next design">›</button>
+    <span class="term-name" id="designName"></span>
+    <button class="showin" id="designShow" type="button">Show in list</button>
+  </div>
+
+  <div class="filters">
+    <input class="search" id="q" type="search" aria-label="Search designs">
+    <div class="chips" id="chips"></div>
+    <button class="chip" id="pairToggle" type="button" aria-pressed="true">recoloured to theme</button>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="adjust">
+    <label for="adjB">brightness
+      <input type="range" id="adjB" min="-40" max="20" step="1" value="0">
+      <output id="adjBv">0</output>
+    </label>
+    <label for="adjS">saturation
+      <input type="range" id="adjS" min="-60" max="40" step="1" value="0">
+      <output id="adjSv">0</output>
+    </label>
+    <button class="chip" id="adjReset" type="button">reset</button>
+    <span class="hint" id="adjHint">Applied to the prompt only — the window keeps the theme's colours.</span>
+  </div>
+
+  <div class="grid" id="designs"></div>
+  <p class="empty" id="empty" hidden>No design matches those filters.</p>
+
+  <div class="note">
+    <strong>The glyphs travel with the page.</strong> The powerline separators and icons come from a 17 KB subset of JetBrainsMono Nerd Font embedded here, not from your system fonts — so these previews look the same on any machine, including anyone you send the link to.
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="picked">
+      <div id="pickedText"></div>
+      <div class="cmds" id="pickedCmds"></div>
+    </div>
+    <div class="actions">
+      <button class="ghost" id="clear" type="button">Reset</button>
+      <button class="go" id="copy" type="button">Copy commands</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const THEMES  = JSON.parse(document.getElementById("THEMES").textContent);
+const DESIGNS = JSON.parse(document.getElementById("DESIGNS").textContent);
+const byName  = Object.fromEntries(DESIGNS.map(d => [d.name, d]));
+const stock   = DESIGNS.filter(d => d.kind !== "paired");
+const ACCENTS = ["os", "path", "gitClean", "gitDirty", "danger", "python"];
+
+const DESIGN_FILTERS = ["powerline", "diamond", "plain", "oneline", "multiline", "filled", "outline"];
+const LABEL = { oneline: "one line", multiline: "two lines" };
+const THEME_FILTERS = [...new Set(THEMES.flatMap(t => t.traits))];
+
+let sel = { theme: THEMES[0].slug, design: null };
+const tActive = new Set(), dActive = new Set();
+// the lists as currently filtered — the arrows step through what you can see
+let themeList = [], designList = [];
+let paired = true;   // show designs recoloured to the theme, as the shell will
+let adjB = 0, adjS = 0;   // brightness / saturation tweak, carried into the commands
+
+const theme = () => THEMES.find(t => t.slug === sel.theme);
+
+/* ---------- recolouring a design onto a theme ----------
+   The same mapping the shell applies when it writes
+   ~/.oh-my-posh/paired/<design>@<theme>.omp.json — greyscale by lightness,
+   coloured by hue — so what you see here is what you get. Doing it in the page
+   rather than pre-rendering every design against every theme keeps this to one
+   set of previews instead of one per theme. */
+const NEUTRAL_KEYS = ["bg", "segFg", "dim", "fg"];
+const ACCENT_KEYS  = ["os", "path", "gitClean", "gitDirty", "danger", "ahead", "python", "node"];
+
+function toHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255,
+        g = parseInt(hex.slice(3, 5), 16) / 255,
+        b = parseInt(hex.slice(5, 7), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+  if (mx === mn) return [0, 0, l];
+  const d = mx - mn;
+  const s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+  let h;
+  if (mx === r) h = ((g - b) / d) % 6;
+  else if (mx === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+
+const hueGap = (a, b) => { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); };
+
+const paletteCache = new Map();
+function paletteOf(t) {
+  if (paletteCache.has(t.slug)) return paletteCache.get(t.slug);
+  const p = {
+    neutral: NEUTRAL_KEYS.filter(k => t[k]).map(k => [t[k], toHsl(t[k])]),
+    accent:  ACCENT_KEYS.filter(k => t[k]).map(k => [t[k], toHsl(t[k])])
+  };
+  paletteCache.set(t.slug, p);
+  return p;
+}
+
+const colourCache = new Map();
+function mapColour(hex, t) {
+  const key = t.slug + hex;
+  if (colourCache.has(key)) return colourCache.get(key);
+  const [h, s, l] = toHsl(hex);
+  const p = paletteOf(t);
+  let best;
+  if (s < 0.18 || !p.accent.length) {
+    best = p.neutral.reduce((a, b) => Math.abs(b[1][2] - l) < Math.abs(a[1][2] - l) ? b : a)[0];
+  } else {
+    best = p.accent.reduce((a, b) => {
+      const da = hueGap(a[1][0], h), db = hueGap(b[1][0], h);
+      if (db !== da) return db < da ? b : a;
+      return Math.abs(b[1][1] - s) < Math.abs(a[1][1] - s) ? b : a;
+    })[0];
+  }
+  colourCache.set(key, best);
+  return best;
+}
+
+/* Mapping each colour independently can land a segment's text on the same
+   palette colour as its own background, which makes the text disappear.
+   Nothing in a per-colour mapping can see that — it is a property of the pair —
+   so it is repaired afterwards, per element. */
+function lum(hex) {
+  const c = [1, 3, 5].map(i => {
+    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+const contrast = (a, b) => {
+  const la = lum(a), lb = lum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+};
+function toHex(css) {
+  const m = css.match(/\d+/g);
+  return m && m.length >= 3
+    ? "#" + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, "0")).join("")
+    : null;
+}
+function fixContrast(root, t) {
+  if (!paired) return;
+  const inks = [t.segFg, t.fg, t.bg].filter(Boolean);
+  root.querySelectorAll("span[style]").forEach(el => {
+    const bg = toHex(el.style.backgroundColor || ""), fg = toHex(el.style.color || "");
+    if (!bg || !fg || contrast(bg, fg) >= 3) return;
+    el.style.color = inks.reduce((a, b) => contrast(bg, b) > contrast(bg, a) ? b : a);
+  });
+}
+
+/* Shift lightness, scale saturation. Must stay identical to `adjust()` in
+   pair-prompt.py — the whole point is that the preview predicts the result. */
+function hslToHex(h, s, l) {
+  const f = n => {
+    const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+  };
+  return "#" + [0, 8, 4].map(n =>
+    Math.round(Math.max(0, Math.min(1, f(n))) * 255).toString(16).padStart(2, "0")).join("");
+}
+
+function adjustColour(hex, b, s) {
+  if (!b && !s) return hex;
+  const [hh, ss, ll] = toHsl(hex);
+  return hslToHex(hh,
+    Math.max(0, Math.min(1, ss * (1 + s / 100))),
+    Math.max(0, Math.min(1, ll + b / 100)));
+}
+
+const htmlCache = new Map();
+function recolour(html, t) {
+  const b = paired ? adjB : 0, s = paired ? adjS : 0;
+  if (!paired) return html;
+  const key = [t.slug, b, s, html.length, html.slice(0, 40)].join("|");
+  if (htmlCache.has(key)) return htmlCache.get(key);
+  const out = html.replace(/#[0-9a-fA-F]{6}\b/g,
+    m => adjustColour(mapColour(m.toLowerCase(), t), b, s));
+  htmlCache.set(key, out);
+  return out;
+}
+
+/* ---------- stages ---------- */
+function dress(stage, tabs, tabOn, body, t) {
+  document.getElementById(stage).style.borderColor = "transparent";
+  document.getElementById(tabs).style.background = shade(t.bg, -12);
+  document.getElementById(tabOn).style.cssText = `background:${t.bg};color:${t.fg}`;
+  const b = document.getElementById(body);
+  b.style.background = t.bg;
+  b.style.color = t.fg;
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    .map(v => Math.max(0, Math.min(255, v + amt)));
+  return "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
+}
+
+function cells(pct, on, off) {
+  let h = '<span class="bar-cells">';
+  const n = 12, k = Math.round(pct / 100 * n);
+  for (let i = 0; i < n; i++) h += `<i style="background:${i < k ? on : off}"></i>`;
+  return h + "</span>";
+}
+
+/* One sample session, reused by every preview: enough real output to judge how
+   a palette treats ordinary text, paths, numbers and warnings — a bare prompt
+   line does not show that. Only characters present in the embedded font subset. */
+function sample(t) {
+  const dim = shade(t.fg, -70);
+  const c = (col, s) => `<span style="color:${col}">${s}</span>`;
+  return [
+    c(t.gitClean, "❯") + " " + c(t.fg, "claude"),
+    "",
+    c(t.os, "&gt;") + " " + c(t.fg, "hey could you make a folder containing pictures of cats"),
+    "  " + c(t.fg, "from google search directly to my desktop please?"),
+    "",
+    c(t.python, "✻") + " " + c(dim, "Thinking… fetch the images first, then write them into a"),
+    "  " + c(dim, "new folder on the desktop."),
+    "",
+    c(t.gitClean, "⏺") + " " + c(t.path, "Bash") + c(dim, "(mkdir -p ~/Desktop/cats)"),
+    "  " + c(dim, "⎿  created ") + c(t.fg, "~/Desktop/cats"),
+    c(t.gitClean, "⏺") + " " + c(t.path, "WebFetch") + c(dim, "(images · \"cats\")"),
+    "  " + c(dim, "⎿  ") + c(t.python, "12") + c(dim, " results  ·  ") + c(t.python, "1.24s"),
+    c(t.gitClean, "⏺") + " " + c(t.path, "Download") + c(dim, " → ~/Desktop/cats"),
+    "  " + c(dim, "⎿  ") + c(t.gitClean, "✓") + c(dim, " 12 files   ") +
+      c(t.gitDirty, "⚠") + c(dim, " 1 skipped"),
+    "",
+    ""
+  ].join("\n");
+}
+
+/* A handful of designs are wider than any sensible window — plague runs 115
+   characters. Rather than cut them off, size the preview down until it fits.
+   Measured from what is actually drawn, not predicted from a character count:
+   Nerd Font icons are full-width while letters are 0.6em, so counting
+   characters underestimates any design carrying a lot of glyphs. Below the
+   floor the line scrolls instead of being clipped. */
+const BASE_PX = 15, MIN_PX = 9;
+
+function fitPrompt(el) {
+  el.style.fontSize = BASE_PX + "px";
+  const avail = el.clientWidth, need = el.scrollWidth;
+  if (avail > 0 && need > avail) {
+    el.style.fontSize = Math.max(MIN_PX, BASE_PX * (avail / need) * 0.995).toFixed(2) + "px";
+  }
+}
+
+function renderThemeStage() {
+  const t = theme();
+  dress("themeStage", "themeTabs", "themeTabOn", "themeBody", t);
+  const pair = byName["zelfium-" + t.slug];
+  document.getElementById("themeSample").innerHTML = sample(t);
+  const tp = document.getElementById("themePrompt");
+  tp.innerHTML = pair ? pair.html : "";
+  fitPrompt(tp);
+
+  const dim = shade(t.fg, -95), sep = `<span style="color:${dim}">  ·  </span>`;
+  const sl = document.getElementById("themeStatus");
+  sl.style.borderTopColor = dim;
+  sl.innerHTML =
+    `<div><span style="color:${t.os}">Opus</span><span style="color:${dim}">/high</span>` + sep +
+      `<span style="color:${t.path}">zaza-demo</span>` + sep +
+      `<span style="color:${t.gitDirty}">⎇ main ●1</span></div>` +
+    `<div>` + cells(38, t.gitClean, dim) +
+      `<span style="color:${t.gitClean}">38%</span><span style="color:${dim}"> 76k/200k</span>` + sep +
+      `<span style="color:${t.gitDirty}">$1.23</span>` + sep +
+      `<span style="color:${dim}">1h15m</span>` + sep +
+      `<span style="color:${dim}">5h </span><span style="color:${t.python}">24%</span></div>`;
+
+  document.getElementById("themeName").textContent = t.scheme + "  ·  " + t.slug;
+}
+
+function renderDesignStage() {
+  const t = theme();
+  dress("designStage", "designTabs", "designTabOn", "designBody", t);
+  const d = sel.design ? byName[sel.design] : byName["zelfium-" + t.slug];
+  document.getElementById("designSample").innerHTML = sample(t);
+  const dp = document.getElementById("designPrompt");
+  dp.innerHTML = d ? recolour(d.html, t) : "";
+  fixContrast(dp, t);
+  fitPrompt(dp);
+  document.getElementById("designName").textContent =
+    sel.design ? sel.design : "zelfium — the matched prompt, shown until you pick another";
+}
+
+/* ---------- filters + grids ---------- */
+function makeChips(host, keys, set, onChange) {
+  document.getElementById(host).innerHTML = keys.map(k =>
+    `<button class="chip" type="button" data-k="${k}" aria-pressed="false">${LABEL[k] || k}</button>`).join("");
+  document.querySelectorAll(`#${host} .chip`).forEach(c => c.addEventListener("click", () => {
+    const k = c.dataset.k;
+    set.has(k) ? set.delete(k) : set.add(k);
+    c.setAttribute("aria-pressed", String(set.has(k)));
+    onChange();
+  }));
+}
+
+function renderThemes() {
+  const q = document.getElementById("tq").value.trim().toLowerCase();
+  const list = THEMES.filter(t =>
+    (!q || t.slug.includes(q) || t.scheme.toLowerCase().includes(q)) &&
+    [...tActive].every(k => t.traits.includes(k)));
+  themeList = list;
+
+  document.getElementById("themes").innerHTML = list.map(t => {
+    const pair = byName["zelfium-" + t.slug];
+    return `<button class="card" data-slug="${t.slug}" aria-pressed="${t.slug === sel.theme}" aria-label="Choose ${t.scheme}">
+      <div class="swatches">${ACCENTS.map(k => `<i style="background:${t[k]}"></i>`).join("")}</div>
+      <div class="prompt" style="background:${t.bg};color:${t.fg}">${pair ? pair.html : ""}</div>
+      <div class="cfoot"><span class="cname sans">${t.scheme}</span>
+        <span class="tags">${t.traits.slice(0, 2).map(x => `<span>${x}</span>`).join("")}</span></div>
+    </button>`;
+  }).join("");
+
+  document.getElementById("tcount").textContent = list.length + " / " + THEMES.length;
+  document.getElementById("tempty").hidden = list.length > 0;
+
+  document.querySelectorAll("#themes .card").forEach(b =>
+    b.addEventListener("click", () => selectTheme(b.dataset.slug, true)));
+}
+
+function selectTheme(slug, jump) {
+  sel.theme = slug;
+  document.querySelectorAll("#themes .card").forEach(x =>
+    x.setAttribute("aria-pressed", String(x.dataset.slug === slug)));
+  renderThemeStage(); renderDesignStage(); renderDesigns(); renderBar();
+  if (jump) document.getElementById("themeStage").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function renderDesigns() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const list = stock.filter(d =>
+    (!q || d.name.toLowerCase().includes(q)) &&
+    [...dActive].every(k => d.traits.includes(k)));
+  designList = list;
+  const t = theme();
+
+  document.getElementById("designs").innerHTML = list.map(d =>
+    `<button class="card" data-name="${d.name}" aria-pressed="${d.name === sel.design}" aria-label="Choose ${d.name}">
+       <div class="prompt" style="background:${t.bg};color:${t.fg}">${recolour(d.html, t)}</div>
+       <div class="cfoot"><span class="cname">${d.name}</span>
+         <span class="tags">${d.traits.filter(x => x !== "git").slice(0, 2)
+           .map(x => `<span>${LABEL[x] || x}</span>`).join("")}</span></div>
+     </button>`).join("");
+
+  document.querySelectorAll("#designs .prompt").forEach(el => fixContrast(el, t));
+  document.getElementById("count").textContent = list.length + " / " + stock.length;
+  document.getElementById("empty").hidden = list.length > 0;
+
+  document.querySelectorAll("#designs .card").forEach(b => b.addEventListener("click", () =>
+    selectDesign(sel.design === b.dataset.name ? null : b.dataset.name, true)));
+}
+
+function selectDesign(name, jump) {
+  sel.design = name;
+  document.querySelectorAll("#designs .card").forEach(x =>
+    x.setAttribute("aria-pressed", String(x.dataset.name === name)));
+  renderDesignStage(); renderBar();
+  if (jump) document.getElementById("designStage").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+/* ---------- stepping and jumping back to the list ---------- */
+function step(list, currentKey, key, dir) {
+  if (!list.length) return null;
+  let i = list.findIndex(x => x[key] === currentKey);
+  i = i < 0 ? (dir > 0 ? 0 : list.length - 1) : (i + dir + list.length) % list.length;
+  return list[i];
+}
+
+function showInList(container, attr, value) {
+  if (!value) return;
+  const el = document.querySelector(`#${container} .card[${attr}="${CSS.escape(value)}"]`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("flash");
+  void el.offsetWidth;            // restart the animation
+  el.classList.add("flash");
+  el.focus({ preventScroll: true });
+}
+
+document.getElementById("themePrev").addEventListener("click", () => {
+  const t = step(themeList.length ? themeList : THEMES, sel.theme, "slug", -1);
+  if (t) selectTheme(t.slug, false);
+});
+document.getElementById("themeNext").addEventListener("click", () => {
+  const t = step(themeList.length ? themeList : THEMES, sel.theme, "slug", 1);
+  if (t) selectTheme(t.slug, false);
+});
+document.getElementById("themeShow").addEventListener("click", () =>
+  showInList("themes", "data-slug", sel.theme));
+
+document.getElementById("designPrev").addEventListener("click", () => {
+  const d = step(designList.length ? designList : stock, sel.design, "name", -1);
+  if (d) selectDesign(d.name, false);
+});
+document.getElementById("designNext").addEventListener("click", () => {
+  const d = step(designList.length ? designList : stock, sel.design, "name", 1);
+  if (d) selectDesign(d.name, false);
+});
+document.getElementById("designShow").addEventListener("click", () => {
+  if (sel.design) showInList("designs", "data-name", sel.design);
+  else document.getElementById("designs").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+/* ---------- command bar ---------- */
+function commands() {
+  const c = ["/terminal-theme " + sel.theme];
+  if (sel.design) {
+    let line = "/terminal-theme prompt " + sel.design + (paired ? "" : " original");
+    if (paired && adjB) line += " --brightness " + adjB;
+    if (paired && adjS) line += " --saturation " + adjS;
+    c.push(line);
+  }
+  return c;
+}
+
+function renderBar() {
+  const how = sel.design ? (paired ? " recoloured" : " in its own colours") : "";
+  document.getElementById("pickedText").innerHTML =
+    `Theme <b>${theme().scheme}</b> &nbsp;·&nbsp; prompt <b>${sel.design || "matched (unchanged)"}</b>${how}`;
+  document.getElementById("pickedCmds").textContent = commands().join("\n");
+}
+
+document.getElementById("copy").addEventListener("click", async () => {
+  const btn = document.getElementById("copy");
+  try {
+    await navigator.clipboard.writeText(commands().join("\n"));
+    btn.textContent = "Copied — paste it to Claude";
+  } catch {
+    btn.textContent = "Select the text to copy";
+  }
+  setTimeout(() => { btn.textContent = "Copy commands"; }, 2600);
+});
+
+document.getElementById("clear").addEventListener("click", () => {
+  sel.design = null;
+  tActive.clear(); dActive.clear();
+  document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", "false"));
+  document.getElementById("q").value = "";
+  document.getElementById("tq").value = "";
+  renderThemes(); renderDesigns(); renderDesignStage(); renderBar();
+});
+
+/* counts come from the data, so installing a theme never leaves them stale */
+document.getElementById("eyebrow").textContent =
+  `${stock.length} prompt designs · ${THEMES.length} matched theme${THEMES.length === 1 ? "" : "s"}`;
+document.getElementById("q").placeholder = `Search ${stock.length} designs…`;
+
+document.getElementById("pairToggle").addEventListener("click", (e) => {
+  paired = !paired;
+  e.currentTarget.setAttribute("aria-pressed", String(paired));
+  e.currentTarget.textContent = paired ? "recoloured to theme" : "author's colours";
+  renderDesignStage(); renderDesigns(); renderBar();
+});
+
+function readAdjust() {
+  adjB = +document.getElementById("adjB").value;
+  adjS = +document.getElementById("adjS").value;
+  document.getElementById("adjBv").textContent = (adjB > 0 ? "+" : "") + adjB;
+  document.getElementById("adjSv").textContent = (adjS > 0 ? "+" : "") + adjS;
+  renderThemeStage(); renderDesignStage(); renderDesigns(); renderBar();
+}
+["adjB", "adjS"].forEach(id =>
+  document.getElementById(id).addEventListener("input", readAdjust));
+document.getElementById("adjReset").addEventListener("click", () => {
+  document.getElementById("adjB").value = 0;
+  document.getElementById("adjS").value = 0;
+  readAdjust();
+});
+
+makeChips("tchips", THEME_FILTERS, tActive, renderThemes);
+makeChips("chips", DESIGN_FILTERS, dActive, renderDesigns);
+document.getElementById("tq").addEventListener("input", renderThemes);
+document.getElementById("q").addEventListener("input", renderDesigns);
+
+renderThemeStage(); renderDesignStage(); renderThemes(); renderDesigns(); renderBar();
+
+// the fit depends on available width, so redo it when the window changes
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { renderThemeStage(); renderDesignStage(); }, 120);
+});
+</script>
+
+

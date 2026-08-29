@@ -1,0 +1,131 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 4,
+  "final_space": true,
+  "console_title_template": "{{ .Folder }}{{ if .Root }} (admin){{ end }}",
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "os",
+          "style": "diamond",
+          "leading_diamond": "\ue0b6",
+          "trailing_diamond": "\ue0b0",
+          "background": "#cba6f7",
+          "foreground": "#11111b",
+          "template": " {{ if .WSL }}WSL at {{ end }}{{ .Icon }} "
+        },
+        {
+          "type": "path",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "background": "#89b4fa",
+          "foreground": "#11111b",
+          "template": " \uf07b {{ .Path }} ",
+          "options": {
+            "style": "agnoster_short",
+            "max_depth": 3,
+            "folder_separator_icon": " \ue0b1 ",
+            "home_icon": "~"
+          }
+        },
+        {
+          "type": "git",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "background": "#a6e3a1",
+          "foreground": "#11111b",
+          "background_templates": [
+            "{{ if or (.Working.Changed) (.Staging.Changed) }}#f9e2af{{ end }}",
+            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f38ba8{{ end }}",
+            "{{ if gt .Ahead 0 }}#fab387{{ end }}",
+            "{{ if gt .Behind 0 }}#fab387{{ end }}"
+          ],
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{ if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
+          "options": {
+            "branch_template": "{{ trunc 24 .Branch }}",
+            "fetch_status": true,
+            "fetch_upstream_icon": true,
+            "fetch_stash_count": true
+          }
+        },
+        {
+          "type": "python",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "background": "#74c7ec",
+          "foreground": "#11111b",
+          "template": " \ue235 {{ if .Venv }}{{ .Venv }} {{ end }}{{ .Major }}.{{ .Minor }} ",
+          "options": {
+            "fetch_virtual_env": true,
+            "display_mode": "context",
+            "home_enabled": false
+          }
+        },
+        {
+          "type": "node",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "background": "#94e2d5",
+          "foreground": "#11111b",
+          "template": " \ue718 {{ .Major }}.{{ .Minor }} ",
+          "options": {
+            "display_mode": "files",
+            "home_enabled": false,
+            "fetch_package_manager": false
+          }
+        }
+      ]
+    },
+    {
+      "type": "rprompt",
+      "alignment": "right",
+      "overflow": "hidden",
+      "segments": [
+        {
+          "type": "executiontime",
+          "style": "plain",
+          "foreground": "#f9e2af",
+          "template": "\uf252 {{ .FormattedMs }}",
+          "options": {
+            "threshold": 1000,
+            "style": "round"
+          }
+        },
+        {
+          "type": "status",
+          "style": "plain",
+          "foreground": "#f38ba8",
+          "template": " \uf00d {{ .Code }}",
+          "options": {
+            "always_enabled": false
+          }
+        },
+        {
+          "type": "time",
+          "style": "plain",
+          "foreground": "#585b70",
+          "template": "  {{ .CurrentDate | date \"15:04\" }}"
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        {
+          "type": "text",
+          "style": "plain",
+          "foreground": "#a6e3a1",
+          "foreground_templates": [
+            "{{ if gt .Code 0 }}#f38ba8{{ end }}"
+          ],
+          "template": "\u276f"
+        }
+      ]
+    }
+  ]
+}

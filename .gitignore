@@ -1,0 +1,4 @@
+# generated / local
+*.bak
+__pycache__/
+.venv/
