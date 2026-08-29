@@ -155,8 +155,9 @@ stock design. If his wording is genuinely ambiguous, ask rather than guess.
 
 Be accurate here — this is the part that looks broken if described wrong.
 
-- **Window background and ANSI colours** — Windows Terminal hot-reloads its settings, so the
-  open window should repaint on its own. If it does not, a new tab will.
+- **Window background and ANSI colours** — Windows Terminal hot-reloads its settings and
+  repaints the open window. Verified on a clean Windows 11 profile, so state it plainly rather
+  than hedging; a new tab is only the fallback if something has gone wrong.
 - **This session's status line** — repaints on its next update, within a few seconds. It reads
   the palette on every run, so nothing needs restarting. Only paired themes move it.
 - **The prompt** — persisted immediately, but he is inside Claude Code and has no shell prompt

@@ -87,8 +87,24 @@ pwsh -File test\new-user-setup.ps1 -Remove
 **This is the one worth doing before sharing the link widely.** The rest run automatically; this
 one needs ten minutes and a sign-out.
 
+## Results so far
+
+The clean-user test (4) has been run once on Windows 11 Pro, Spanish: **20 checks, 0 failures**,
+plus both eyeball checks. The font rendered immediately — **no reboot needed** — and `tt` repainted
+the open window rather than requiring a new tab.
+
+Three real bugs surfaced only because it was run on a fresh profile, all fixed:
+
+- `Add-LocalGroupMember -Group 'Users'` fails on non-English Windows; the group is `Usuarios`
+  there. Now addressed by SID.
+- PowerShell 7 from the Microsoft Store installs **per user**, so it is invisible to a new
+  account. The README now says `--scope machine`.
+- The verifier checked for the profile's commands in a shell it had itself started with
+  `-NoProfile`, reporting three failures against a working install.
+
 ## What is still untested anywhere
 
-- Whether a font winget has just installed is visible to Windows Terminal before a reboot.
-  It usually is not, which is why the installer says so at the end.
 - Windows 10. Everything here assumes Windows 11 conventions.
+- A machine with no winget at all — the installer warns and continues, but nobody has watched it.
+- Whether the font needs a reboot on a machine where it was *not* already installed system-wide.
+  On the test machine it was, so that path is still unproven.

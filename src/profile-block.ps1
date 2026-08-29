@@ -357,7 +357,7 @@ function Set-TerminalTheme {
     Write-Host ""
     Write-Host "  Terminal scheme -> $scheme" -ForegroundColor Green
     Write-Host "  Prompt          -> $base, recoloured to $Name" -ForegroundColor Green
-    Write-Host "  Open a new tab to see the new background." -ForegroundColor DarkGray
+    Write-Host "  The window repaints itself; a new tab if it does not." -ForegroundColor DarkGray
     Write-Host ""
 }
 

@@ -83,8 +83,12 @@ then a **real install from nothing** including the downloads, rendering every ge
 and verifying a recoloured design uses only palette colours. That runner is the closest thing
 to a first-time user, and it is the check that matters most.
 
-Not covered anywhere: the Windows Terminal step (the runner has none — it warns and skips), and
-whether a font winget just installed is visible to Windows Terminal before a reboot.
+The Windows Terminal step is the one CI cannot reach, so it was verified by hand on a clean
+Windows profile: 20 checks, all passing, including that the settings still parse after the merge,
+all schemes are present and none duplicated, and the default profile switches to PowerShell 7.
+The two things no script can check were confirmed by eye on that same profile — the Nerd Font
+rendered without a reboot, and switching a theme repainted the open window rather than needing a
+new tab.
 
 ## Layout
 
