@@ -38,7 +38,15 @@ tt rose-pine                     # or: tt 7, or tts for the menu
 
 ## Requirements
 
-- Windows 10/11 with **Windows Terminal** and **PowerShell 7** (`winget install Microsoft.PowerShell`)
+- Windows 10/11 with **Windows Terminal** and **PowerShell 7**:
+
+  ```powershell
+  winget install --id Microsoft.PowerShell --scope machine
+  ```
+
+  Use `--scope machine`. The Microsoft Store build of PowerShell 7 installs
+  **per user**, so it is invisible to every other account on the machine — which
+  is easy to miss until someone else signs in and `pwsh` is not found.
 - `winget` for the font, `git` for the prompt's git segment
 - Python only for the optional catalogue builder — `-SkipCatalogue` leaves it out
 

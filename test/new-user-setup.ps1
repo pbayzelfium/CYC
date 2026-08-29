@@ -114,6 +114,19 @@ installer's Windows Terminal step actually runs. Neither CI nor Windows Sandbox
 has Windows Terminal, so the settings merge - the step most likely to damage
 something a real person already has - is untested anywhere else.
 
+STEP 0  Check PowerShell 7 is here. In any terminal, run:
+
+            pwsh -v
+
+        If that says it is not recognised, this account has no PowerShell 7 and
+        nothing below will run. The Microsoft Store build is installed PER USER,
+        so it does not carry over from another account. Install the machine-wide
+        build once, from an ADMIN window in the OWNING account:
+
+            winget install --id Microsoft.PowerShell --scope machine
+
+        Then sign out of this account and back in, and try 'pwsh -v' again.
+
 STEP 1  Open Windows Terminal from the Start menu, then CLOSE it again.
         This is not busywork. Windows Terminal only writes its settings.json the
         first time it runs. Skipping this would test "create a config from
