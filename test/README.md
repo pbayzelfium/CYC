@@ -50,23 +50,42 @@ A new local user on this machine has Windows Terminal (provisioned for every use
 and winget, but a completely fresh profile, PATH, fonts and settings — which is exactly a
 first-time user.
 
-```powershell
-# elevated
-New-LocalUser -Name cyctest -NoPassword -AccountNeverExpires
-Add-LocalGroupMember -Group Users -Member cyctest
-```
-
-Sign in as `cyctest`, open Windows Terminal once so it writes its default settings, then run the
-installer. Check: the font applies, the schemes appear in the dropdown, `tts` shows swatches,
-and `tt 3` switches both window and prompt. Afterwards:
+Two scripts do it. **Elevated, as yourself:**
 
 ```powershell
-Remove-LocalUser -Name cyctest
-Remove-Item "C:\Users\cyctest" -Recurse -Force   # elevated
+pwsh -File test\new-user-setup.ps1
 ```
 
-**This is the one worth doing before sharing the link widely.** The rest can run automatically;
-this one needs ten minutes and a sign-out.
+It creates the account (with a password — some policies refuse to let a passwordless local
+account sign in, which turns into a confusing dead end at the lock screen), stages the installer
+in `C:\Users\Public\CYC` where the other account can read it, and prints the remaining steps.
+
+Then sign in as the test user, open Windows Terminal once so it writes its default settings,
+run the installer, reopen the terminal, and:
+
+```powershell
+pwsh -NoProfile -File C:\Users\Public\CYC\verify-clean-user.ps1
+```
+
+That checks the Windows Terminal side specifically: the settings still parse, the font applied,
+all schemes are present and none duplicated, a `.bak` was left, the profile loads in a new shell,
+and switching themes actually works. It refuses to run as your own account, since that would
+prove nothing.
+
+Two things it cannot check, and asks you to look at instead: whether the prompt shows **icons
+rather than boxes** (boxes mean the font is not visible yet — usually a reboot, and worth knowing
+before telling anyone else to install this), and whether the **window background repaints live**
+or only in a new tab. The README claims live; that claim has never been verified on a fresh
+machine.
+
+Tear down afterwards, elevated, once signed back in as yourself:
+
+```powershell
+pwsh -File test\new-user-setup.ps1 -Remove
+```
+
+**This is the one worth doing before sharing the link widely.** The rest run automatically; this
+one needs ten minutes and a sign-out.
 
 ## What is still untested anywhere
 
