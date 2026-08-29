@@ -1,0 +1,83 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  install:
+    # A clean Windows box. The point of this job is the install-from-nothing
+    # path, which cannot be checked on a machine that already has everything.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer parses
+        shell: pwsh
+        run: |
+          $errs = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "$PWD/install.ps1", [ref]$null, [ref]$errs) | Out-Null
+          if ($errs) { $errs | ForEach-Object { Write-Error $_.Message }; exit 1 }
+          Write-Host "clean parse"
+
+      - name: Payloads decode
+        shell: pwsh
+        run: |
+          $t = Get-Content install.ps1 -Raw
+          $n = 0
+          [regex]::Matches($t, "(?s)'([^']+)' = @\{ core = \`$(?:true|false); b64 = @'\r?\n(.*?)\r?\n'@ \}") |
+            ForEach-Object {
+              [Text.Encoding]::UTF8.GetString(
+                [Convert]::FromBase64String(($_.Groups[2].Value -replace '\s',''))) | Out-Null
+              $n++
+            }
+          if ($n -lt 10) { Write-Error "only $n payloads found"; exit 1 }
+          Write-Host "$n payloads decoded"
+
+      - name: Dry run changes nothing
+        shell: pwsh
+        run: pwsh -NoProfile -File install.ps1 -DryRun
+
+      - name: Test suite
+        shell: pwsh
+        run: pwsh -NoProfile -File test-install.ps1
+
+      - name: Real install into a clean profile
+        shell: pwsh
+        run: |
+          # The runner has no Windows Terminal, so that step warns and is
+          # skipped; everything else runs for real, including the downloads.
+          pwsh -NoProfile -File install.ps1 -SkipCatalogue
+          if (-not (Test-Path "$HOME/.local/bin/oh-my-posh.exe")) {
+            Write-Error "oh-my-posh was not installed"; exit 1
+          }
+          $themes = @(Get-ChildItem "$HOME/.oh-my-posh/themes" -Filter *.omp.json)
+          if ($themes.Count -lt 50) { Write-Error "theme collection missing"; exit 1 }
+          Write-Host "oh-my-posh + $($themes.Count) designs installed"
+
+      - name: The installed prompt actually renders
+        shell: pwsh
+        run: |
+          $omp = "$HOME/.local/bin/oh-my-posh.exe"
+          foreach ($cfg in Get-ChildItem "$HOME/.oh-my-posh" -Filter 'zelfium-*.omp.json') {
+            $out = & $omp print primary --config $cfg.FullName --shell pwsh --plain
+            if (-not $out) { Write-Error "$($cfg.Name) rendered nothing"; exit 1 }
+          }
+          Write-Host "every generated prompt renders"
+
+      - name: Recolouring works end to end
+        shell: pwsh
+        run: |
+          python "$HOME/.oh-my-posh/pair-prompt.py" agnoster nord
+          $f = "$HOME/.oh-my-posh/paired/agnoster@nord.omp.json"
+          if (-not (Test-Path $f)) { Write-Error "no paired config produced"; exit 1 }
+          $pal = (Get-Content "$HOME/.oh-my-posh/palettes.json" -Raw | ConvertFrom-Json).nord
+          $allowed = @($pal.PSObject.Properties | Where-Object { $_.Name -ne 'scheme' } |
+                       ForEach-Object { $_.Value.ToLower() })
+          $used = [regex]::Matches((Get-Content $f -Raw), '#[0-9a-fA-F]{6}') |
+                  ForEach-Object { $_.Value.ToLower() } | Sort-Object -Unique
+          $stray = @($used | Where-Object { $allowed -notcontains $_ })
+          if ($stray.Count) { Write-Error "colours outside the palette: $($stray -join ', ')"; exit 1 }
+          Write-Host "$($used.Count) colours, all inside the nord palette"
