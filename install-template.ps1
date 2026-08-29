@@ -127,6 +127,15 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     }
     if (-not (Test-Path $pwsh)) { Write-Host "  PowerShell 7 still not found." -ForegroundColor Red; exit 1 }
 
+    if (-not $PSCommandPath) {
+        # Piped into iex rather than run from a file, so there is nothing to
+        # restart. bootstrap.ps1 exists precisely to avoid this.
+        Write-Host ""
+        Write-Host "  This script cannot restart itself when piped." -ForegroundColor Red
+        Write-Host "  Use the bootstrap instead:" -ForegroundColor Yellow
+        Write-Host '    powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/bootstrap.ps1 | iex"' -ForegroundColor Yellow
+        exit 1
+    }
     Say "restarting in PowerShell 7..." Green
     $argv = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath)
     if ($DryRun)        { $argv += '-DryRun' }

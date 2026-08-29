@@ -29,7 +29,7 @@ ROOT = pathlib.Path.home() / ".oh-my-posh"
 HERE = pathlib.Path(__file__).parent
 # A deliberately SHORT path: a deep one dominates every preview and pushes the
 # interesting part of the prompt off the card.
-PWD = str(pathlib.Path.home() / "omp-preview")
+PWD = str(pathlib.Path.home() / "example-repo")
 
 
 def ensure_repo():
@@ -48,7 +48,7 @@ def ensure_repo():
     git("config", "user.email", "preview@local")
     git("config", "user.name", "preview")
     (p / "README.md").write_text("hello\n", encoding="utf-8")
-    (p / "package.json").write_text('{"name":"zaza"}\n', encoding="utf-8")
+    (p / "package.json").write_text('{"name":"example"}\n', encoding="utf-8")
     git("add", "-A")
     git("commit", "-qm", "init")
     (p / "README.md").write_text("hello\nmore\n", encoding="utf-8")
@@ -163,12 +163,61 @@ def ansi_to_html(text):
     return "".join(out)
 
 
+def _now_playing():
+    """Whatever the media segment would show. These previews get published, so
+    the real track title is swapped for a placeholder."""
+    try:
+        out = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "(Get-Process Spotify -EA SilentlyContinue | "
+             "Where-Object MainWindowTitle | Select-Object -First 1).MainWindowTitle"],
+            capture_output=True, timeout=20).stdout.decode("utf-8", "replace").strip()
+        return out if out and out.lower() != "spotify" else None
+    except Exception:
+        return None
+
+
+def scrub(text, track):
+    """Replace anything identifying with a neutral example. build-installer.py
+    refuses to package a catalogue that still contains any of it."""
+    import getpass
+    import socket
+    home = str(pathlib.Path.home())
+    user = getpass.getuser()
+    host = socket.gethostname()
+
+    if track:
+        # the media segment renders it as "Artist ~ Title" or "Artist - Title"
+        parts = [track] + [s.strip() for s in track.replace("~", "-").split("-")]
+        for part in sorted(parts, key=len, reverse=True):
+            if len(part) > 3:
+                text = text.replace(part, "song example")
+        while "song example song example" in text:
+            text = text.replace("song example song example", "song example")
+
+    text = text.replace(user + "@" + host, "example@windows")
+    text = text.replace(home, "C:" + chr(92) + "Users" + chr(92) + "example")
+    text = text.replace(user, "example")
+    text = text.replace(host, "windows")
+    return text
+
+
+def _clean_env():
+    """oh-my-posh reads the real user, host and hardware. These previews are
+    published, so render them under a neutral identity instead."""
+    import os
+    e = dict(os.environ)
+    e.update({"USERNAME": "user", "USER": "user", "COMPUTERNAME": "windows",
+              "USERDOMAIN": "windows", "HOSTNAME": "windows"})
+    return e
+
+
 def render(cfg):
     r = subprocess.run(
         [OMP, "print", "primary", "--config", str(cfg), "--shell", "pwsh",
          "--pwd", PWD, "--terminal-width", "70", "--status", "0",
          "--execution-time", "1400"],
-        capture_output=True, timeout=25,
+        capture_output=True, timeout=25, env=_clean_env(),
     )
     return r.stdout.decode("utf-8", "replace")
 
@@ -198,6 +247,9 @@ def traits(raw):
 
 def main():
     ensure_repo()
+    track = _now_playing()
+    if track:
+        print("scrubbing now-playing: %r" % track)
     items = []
     files = [(ROOT / "zelfium.omp.json", "zelfium", "custom")]
     for slug in json.loads((ROOT / "palettes.json").read_text(encoding="utf-8")):
@@ -215,7 +267,7 @@ def main():
         except Exception as e:
             print("skip %s: %s" % (name, e), file=sys.stderr)
             continue
-        raw = raw.rstrip()
+        raw = scrub(raw.rstrip(), track)
         # collapse the long run of padding before a right prompt
         raw = re.sub(r" {6,}", "   ", raw)
         items.append({
