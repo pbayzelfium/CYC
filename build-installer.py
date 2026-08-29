@@ -107,6 +107,22 @@ def catalogue_page():
     html = re.sub(r" The settings behind them live in the <a [^>]*>[^<]*</a>\.", "", html)
     if "claude.ai/code/artifact" in html:
         raise SystemExit("a private artifact link is still in the catalogue")
+
+    # This page is published. oh-my-posh renders the real user, host, hardware
+    # and whatever Spotify is playing, so refuse to build rather than leak it.
+    import getpass
+    import socket
+    leaks = {
+        getpass.getuser(): "your username",
+        socket.gethostname(): "your computer name",
+        str(pathlib.Path.home()): "your home path",
+    }
+    found = [why for token, why in leaks.items() if token and token in html]
+    if found:
+        raise SystemExit(
+            "catalogue still contains " + ", ".join(found) +
+            "\n  Close Spotify, then rebuild:"
+            "\n  pwsh -NoProfile -File ~/.oh-my-posh/catalogue/rebuild.ps1")
     return html
 
 
