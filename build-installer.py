@@ -94,6 +94,24 @@ def scheme_defs():
 
 payload[".oh-my-posh/schemes.json"] = (b64(scheme_defs()), True)
 
+
+def catalogue_page():
+    """The built catalogue. Shipped rather than built on the user's machine:
+    building needs Python, a virtualenv and fonttools, so requiring it meant
+    nobody got a catalogue at all. Strips the link to this instance's private
+    Control Room artifact, which nobody else can open."""
+    f = ROOT / "catalogue/theme-catalogue.html"
+    if not f.exists():
+        raise SystemExit("catalogue not built - run catalogue/rebuild.ps1 first")
+    html = f.read_text(encoding="utf-8")
+    html = re.sub(r" The settings behind them live in the <a [^>]*>[^<]*</a>\.", "", html)
+    if "claude.ai/code/artifact" in html:
+        raise SystemExit("a private artifact link is still in the catalogue")
+    return html
+
+
+payload[".oh-my-posh/catalogue/theme-catalogue.html"] = (b64(catalogue_page()), True)
+
 blob = "\n".join(
     f"  '{dest}' = @{{ core = ${'true' if req else 'false'}; b64 = @'\n{chunks(data)}\n'@ }}"
     for dest, (data, req) in payload.items())

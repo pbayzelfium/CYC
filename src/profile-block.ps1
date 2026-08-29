@@ -153,6 +153,21 @@ function Set-PoshTheme {
     Write-Host "Prompt set to $base$note" -ForegroundColor Green
 }
 
+function Show-Catalogue {
+    <#  Open the theme catalogue in a browser: every prompt design rendered
+        against the same repo, with filters, full previews, and brightness and
+        saturation sliders whose values are carried into the command you copy.  #>
+    $page = Join-Path $script:OmpRoot 'catalogue\theme-catalogue.html'
+    if (-not (Test-Path $page)) {
+        Write-Host "No catalogue found at $page" -ForegroundColor Red
+        Write-Host "Rebuild it with: pwsh -NoProfile -File `"$(Join-Path $script:OmpRoot 'catalogue\rebuild.ps1')`"" -ForegroundColor Yellow
+        return
+    }
+    Start-Process $page
+    Write-Host "Opened $page" -ForegroundColor Green
+}
+Set-Alias catalogue Show-Catalogue
+
 Set-Alias themes  Get-PoshThemeList
 Set-Alias gallery Show-PoshThemeGallery
 

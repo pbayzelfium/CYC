@@ -171,7 +171,7 @@ else {
 Step "Writing configuration"
 foreach ($k in $Payload.Keys) {
     if ($k -eq '__profile__') { continue }
-    if ($SkipCatalogue -and -not $Payload[$k].core) { Say "skipped $k (catalogue)" DarkGray; continue }
+    if ($SkipCatalogue -and -not $Payload[$k].core) { Say "skipped $k (catalogue builder)" DarkGray; continue }
     Write-Payload $k $Payload[$k].b64
 }
 
@@ -292,8 +292,11 @@ Write-Host "    tts                      the theme menu, with colour swatches"
 Write-Host "    tt 3                     switch theme and prompt together"
 Write-Host "    Install-TerminalTheme    add any of 600+ schemes"
 Write-Host "    /terminal-theme          the same, from inside Claude Code"
+Write-Host "    catalogue                open the theme catalogue in your browser"
 Write-Host ""
-if (-not $SkipCatalogue) {
+Write-Host "  The catalogue is already built and installed - 'catalogue' opens it." -ForegroundColor DarkGray
+Write-Host "  You only need to rebuild it after adding a theme, which needs Python:" -ForegroundColor DarkGray
+if ($false) {
     Write-Host "  The catalogue builder needs Python. To set it up:" -ForegroundColor DarkGray
     Write-Host "    python -m venv ~/.oh-my-posh/catalogue/.venv"
     Write-Host "    ~/.oh-my-posh/catalogue/.venv/Scripts/python -m pip install fonttools brotli"
