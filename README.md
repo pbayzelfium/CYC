@@ -3,13 +3,45 @@
 One command turns a bare Windows Terminal into a themed one, with a prompt, matched colour
 schemes, and a Claude Code status line that follows whichever theme is active.
 
+## Install
+
+Paste this into **any** Windows terminal. It fetches everything and installs it:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/bootstrap.ps1 | iex"
+```
+
+See what it would do first, changing nothing:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "$env:CYC_DRYRUN=1; irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/bootstrap.ps1 | iex"
+```
+
+Already installed and want to upgrade: set `$env:CYC_FORCE=1` the same way. It refuses to
+overwrite an existing install otherwise, because re-running replaces the prompt config and
+would lose any edits you made to it.
+
+<details>
+<summary>Why the command looks like that</summary>
+
+`powershell`, not `pwsh` — `powershell` is on every Windows, while `pwsh` is one of the things
+this installs. Once running, it installs PowerShell 7 and restarts itself there.
+
+`-ExecutionPolicy Bypass` — Windows blocks downloaded scripts by default.
+
+The bootstrap is a small script that downloads `install.ps1` to a file and runs it. That extra
+hop is not decoration: `install.ps1` restarts itself in PowerShell 7 using `$PSCommandPath`,
+which is empty when a script is piped, so piping it straight in would break at the handover.
+
+**Prefer not to pipe from the internet?** Reasonable. Download
+[install.ps1](https://raw.githubusercontent.com/pbayzelfium/CYC/main/install.ps1), read it — `src/` in this repo holds the same payload as plain
+files rather than base64 — then run:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -NoProfile -File install.ps1
 ```
 
-`powershell` — not `pwsh`. It is on every Windows, whereas `pwsh` is what this installs.
-`-ExecutionPolicy Bypass` is needed because Windows blocks downloaded scripts by default.
-Once it is running it installs PowerShell 7 and restarts itself there.
+</details>
 
 ## What you get
 
