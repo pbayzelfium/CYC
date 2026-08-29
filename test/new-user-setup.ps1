@@ -90,9 +90,72 @@ foreach ($f in 'install.ps1', 'test-install.ps1') {
     Copy-Item (Join-Path $repo $f) $stage -Force
 }
 Copy-Item (Join-Path $PSScriptRoot 'verify-clean-user.ps1') $stage -Force
+# The walkthrough has to live where the TEST account can read it: once you have
+# switched users you can no longer see the window you launched this from.
+$howto = @"
+CYC - clean user test
+=====================
+You are signed in as $User. This is a throwaway account; nothing here matters.
+
+The point of this test: a brand new Windows profile is the only place where the
+installer's Windows Terminal step actually runs. Neither CI nor Windows Sandbox
+has Windows Terminal, so the settings merge - the step most likely to damage
+something a real person already has - is untested anywhere else.
+
+STEP 1  Open Windows Terminal from the Start menu, then CLOSE it again.
+        This is not busywork. Windows Terminal only writes its settings.json the
+        first time it runs. Skipping this would test "create a config from
+        nothing" instead of "merge into a config that already exists", which is
+        the case that can destroy someone's setup.
+
+STEP 2  Open Windows Terminal again and run:
+
+            pwsh -NoProfile -File C:\Users\Public\CYC\install.ps1
+
+        Expect it to install a font (accept the elevation prompt), download
+        oh-my-posh and ~120 prompt designs, and finish in a minute or two.
+        Warnings are printed at the end - note any of them.
+
+STEP 3  Close EVERY Windows Terminal window. Open a new one.
+        The font and the new default profile only apply to a fresh window.
+
+STEP 4  Run:
+
+            pwsh -NoProfile -File C:\Users\Public\CYC\verify-clean-user.ps1
+
+        It checks the Windows Terminal side: settings still parse, the font
+        applied, all schemes present and none duplicated, a .bak was left, the
+        profile loads, and switching themes works.
+
+STEP 5  Look at the screen. Two things no script can check:
+
+        a) Does the prompt show ICONS, or BOXES?
+           Boxes mean the font is not visible to Windows Terminal yet. That
+           usually needs a reboot - and if so, everyone else installing this
+           will hit the same thing, which is worth knowing before sharing it.
+
+        b) Run  tts  then  tt 5 .
+           Does the WINDOW BACKGROUND change straight away, or only in a new
+           tab? The docs claim it repaints live. That has never been verified
+           on a fresh machine, so whatever you see is the answer.
+
+STEP 6  Note anything that failed or looked wrong, then sign OUT of $User
+        (Start > avatar > Sign out). Signing out of this throwaway account is
+        fine and is required before its folder can be deleted.
+
+        Back in your own session, run elevated:
+
+            pwsh -File "$PSCommandPath" -Remove
+
+Things worth reporting either way: any FAIL or WARN lines, whether icons
+rendered, and whether the background repainted live or needed a new tab.
+"@
+Set-Content (Join-Path $stage 'INSTRUCTIONS.txt') $howto -Encoding UTF8
+
 # readable by everyone, since C:\Users\Public inherits oddly on some machines
 icacls $stage /grant "Users:(OI)(CI)RX" /T | Out-Null
 Write-Host "  staged installer at:   $stage" -ForegroundColor Green
+Write-Host "  walkthrough for the test account: $stage\INSTRUCTIONS.txt" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "  Next, in order:" -ForegroundColor White
