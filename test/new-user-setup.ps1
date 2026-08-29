@@ -78,9 +78,21 @@ if (Get-LocalUser -Name $User -ErrorAction SilentlyContinue) {
     $pw = ConvertTo-SecureString 'CycTest!2024' -AsPlainText -Force
     New-LocalUser -Name $User -Password $pw -AccountNeverExpires -PasswordNeverExpires `
         -FullName 'CYC clean test' -Description 'Throwaway account for testing CYC' | Out-Null
-    Add-LocalGroupMember -Group 'Users' -Member $User
     Write-Host "  created local account: $User" -ForegroundColor Green
     Write-Host "  password:              CycTest!2024" -ForegroundColor Green
+}
+
+# Group membership, every run - New-LocalUser joins no group, and a user in no
+# group cannot sign in properly. By SID, not name: the built-in group is
+# "Usuarios" on Spanish Windows, "Benutzer" on German, and so on.
+$usersGroup = Get-LocalGroup -SID 'S-1-5-32-545'
+$already = Get-LocalGroupMember -SID 'S-1-5-32-545' -ErrorAction SilentlyContinue |
+           Where-Object { $_.Name -like "*\$User" }
+if ($already) {
+    Write-Host "  already in $($usersGroup.Name)" -ForegroundColor DarkGray
+} else {
+    Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $User
+    Write-Host "  added to group:        $($usersGroup.Name)" -ForegroundColor Green
 }
 
 # --- stage the installer somewhere the other account can read ---------------
@@ -152,8 +164,9 @@ rendered, and whether the background repainted live or needed a new tab.
 "@
 Set-Content (Join-Path $stage 'INSTRUCTIONS.txt') $howto -Encoding UTF8
 
-# readable by everyone, since C:\Users\Public inherits oddly on some machines
-icacls $stage /grant "Users:(OI)(CI)RX" /T | Out-Null
+# readable by everyone, since C:\Users\Public inherits oddly on some machines.
+# *SID form, again because the group name is localised.
+icacls $stage /grant "*S-1-5-32-545:(OI)(CI)RX" /T | Out-Null
 Write-Host "  staged installer at:   $stage" -ForegroundColor Green
 Write-Host "  walkthrough for the test account: $stage\INSTRUCTIONS.txt" -ForegroundColor Green
 
