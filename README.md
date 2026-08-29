@@ -38,17 +38,23 @@ tt rose-pine                     # or: tt 7, or tts for the menu
 
 ## Requirements
 
-- Windows 10/11 with **Windows Terminal** and **PowerShell 7**:
+**Windows 10 or 11. That is the whole list.**
 
-  ```powershell
-  winget install --id Microsoft.PowerShell --scope machine
-  ```
+The installer brings everything else itself — you should not have to fetch anything first:
 
-  Use `--scope machine`. The Microsoft Store build of PowerShell 7 installs
-  **per user**, so it is invisible to every other account on the machine — which
-  is easy to miss until someone else signs in and `pwsh` is not found.
-- `winget` for the font, `git` for the prompt's git segment
-- Python only for the optional catalogue builder — `-SkipCatalogue` leaves it out
+| It installs | Why |
+|-------------|-----|
+| PowerShell 7 | If you start it from Windows PowerShell 5.1 it installs 7 and **restarts itself there** |
+| Windows Terminal | Nothing to theme without it |
+| JetBrainsMono Nerd Font | The prompt's icons. Falls back to a per-user font install if winget is unavailable, which needs no admin |
+| oh-my-posh + ~120 designs | The prompt itself |
+| Terminal-Icons | File and folder glyphs in `ls` |
+| git | The prompt's git segment stays empty without it |
+| Python + fonttools | **Not optional.** Recolouring a design onto a theme runs `pair-prompt.py` at the moment you switch, so without Python that feature is dead, not degraded |
+
+It prefers `winget` and falls back to direct downloads where it can. Anything it genuinely
+cannot install is reported at the end as a warning naming what is missing and what that costs
+you — it never fails silently or leaves you guessing.
 
 ## Options
 
