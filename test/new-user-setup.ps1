@@ -96,7 +96,11 @@ Write-Host "  staged installer at:   $stage" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "  Next, in order:" -ForegroundColor White
-Write-Host "    1. Sign out (or Win+L, then switch user). Do NOT delete your session."
+Write-Host "    1. SWITCH USER - do not sign out." -ForegroundColor Yellow
+Write-Host "       Start > your avatar > $User,  or  Ctrl+Alt+Del > Switch user."
+Write-Host "       Switching keeps your own session running in the background, so"
+Write-Host "       anything you have open - editors, terminals, a Claude Code session -"
+Write-Host "       is still there when you switch back. Signing out closes all of it."
 Write-Host "    2. Sign in as  $User  with  CycTest!2024"
 Write-Host "       First sign-in takes a minute or two while Windows sets the profile up."
 Write-Host "    3. Open Windows Terminal once from Start, then close it."
@@ -111,7 +115,8 @@ Write-Host "         pwsh -NoProfile -File C:\Users\Public\CYC\verify-clean-user
 Write-Host ""
 Write-Host "    6. Look at the terminal with your own eyes: coloured prompt, icons not boxes."
 Write-Host "       Try  tts  and  tt 3  and confirm the window background changes."
-Write-Host "    7. Sign out of $User, sign back in as yourself, then run this elevated:"
+Write-Host "    7. Sign OUT of $User (that one is safe - it is the throwaway account),"
+Write-Host "       switch back to yourself, then run this elevated:"
 Write-Host ""
 Write-Host "         pwsh -File `"$PSCommandPath`" -Remove" -ForegroundColor Cyan
 Write-Host ""
