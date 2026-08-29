@@ -74,10 +74,13 @@ Write-Host "  got it (${kb} KB) - running" -ForegroundColor DarkGray
 # stops it running even under Bypass in some configurations.
 Unblock-File $dest -ErrorAction SilentlyContinue
 
-$argv = @()
-if ($DryRun)        { $argv += '-DryRun' }
-if ($SkipCatalogue) { $argv += '-SkipCatalogue' }
-if ($Force)         { $argv += '-Force' }
+# A HASHTABLE splat, not an array: array splatting passes arguments
+# positionally, so '-DryRun' was being bound as a value to the first positional
+# parameter instead of as a switch.
+$opts = @{}
+if ($DryRun)        { $opts['DryRun'] = $true }
+if ($SkipCatalogue) { $opts['SkipCatalogue'] = $true }
+if ($Force)         { $opts['Force'] = $true }
 if ($DryRun) { Write-Host "  dry run - nothing will be changed" -ForegroundColor Yellow }
-& $dest @argv
+& $dest @opts
 exit $LASTEXITCODE

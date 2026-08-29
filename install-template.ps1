@@ -38,7 +38,9 @@
   If you already have PowerShell 7:
     pwsh -NoProfile -File install.ps1 -DryRun
 #>
-[CmdletBinding()]
+# PositionalBinding=$false: a stray argument must never land in a parameter
+# by position. -TestRoot silently absorbed a '-DryRun' that way.
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [switch]$DryRun,
     [switch]$SkipCatalogue,
