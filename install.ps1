@@ -114,6 +114,7 @@ $Manifest = [ordered]@{
   '.claude/statusline.ps1' = $true
   '.claude/commands/terminal-theme.md' = $true
   '.oh-my-posh/uninstall.ps1' = $true
+  '.oh-my-posh/cyc-protocol.ps1' = $true
   '.oh-my-posh/catalogue/render-prompts.py' = $false
   '.oh-my-posh/catalogue/subset-font.py' = $false
   '.oh-my-posh/catalogue/build-catalogue.py' = $false
@@ -536,6 +537,28 @@ else {
 }
 
 # --- done -------------------------------------------------------------------
+# --- 10b. the cyc:// link handler -------------------------------------------
+# So the catalogue's buttons can apply a theme directly instead of handing you
+# a command to paste. Per-user registry, no admin needed.
+Step "Catalogue buttons"
+$handler = Join-Path $Root '.oh-my-posh\cyc-protocol.ps1'
+if ($Offline -or $TestRoot) { Say "skipped (test mode)" DarkGray }
+elseif ($DryRun) { Say "would register the cyc:// link handler" }
+elseif (-not (Test-Path $handler)) { Warn "handler missing, buttons will fall back to copying" }
+else {
+    try {
+        $pwshExe = (Get-Process -Id $PID).Path
+        $key = 'HKCU:\Software\Classes\cyc'
+        New-Item -Path $key -Force | Out-Null
+        Set-ItemProperty -Path $key -Name '(Default)' -Value 'URL:CYC theme'
+        Set-ItemProperty -Path $key -Name 'URL Protocol' -Value ''
+        New-Item -Path "$key\shell\open\command" -Force | Out-Null
+        Set-ItemProperty -Path "$key\shell\open\command" -Name '(Default)' `
+            -Value ('"{0}" -WindowStyle Hidden -ExecutionPolicy Bypass -File "{1}" "%1"' -f $pwshExe, $handler)
+        Say "registered - the catalogue can now apply themes directly" DarkGray
+    } catch { Warn "could not register the link handler: $($_.Exception.Message)" }
+}
+
 # --- 11. show them what they just installed --------------------------------
 # The point of the catalogue is being seen. Waiting for someone to think to
 # type 'catalogue' means most people never find it.

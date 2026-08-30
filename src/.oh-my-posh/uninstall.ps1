@@ -134,6 +134,15 @@ foreach ($f in '.claude\statusline.ps1', '.claude\commands\terminal-theme.md') {
     if ($DryRun) { Say "would delete $f" } else { Remove-Item $p -Force; Did "deleted $f" }
 }
 
+# --- 3b. the cyc:// handler -------------------------------------------------
+Step "Catalogue link handler"
+if ($TestRoot) { Say "skipped (test mode)" DarkGray }
+elseif ($DryRun) { Say "would unregister cyc://" }
+elseif (Test-Path 'HKCU:\Software\Classes\cyc') {
+    Remove-Item 'HKCU:\Software\Classes\cyc' -Recurse -Force
+    Did "unregistered cyc://"
+} else { Say "not registered" DarkGray }
+
 # --- 4. the files -----------------------------------------------------------
 Step "Files"
 $omp = Join-Path $Root '.oh-my-posh'

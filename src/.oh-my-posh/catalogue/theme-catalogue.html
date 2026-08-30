@@ -141,6 +141,7 @@ h2{font-size:12.5px;font-family:var(--mono);font-weight:500;letter-spacing:.14em
 .bar-in{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .picked{flex:1 1 300px;min-width:0;font-size:13.5px;color:var(--ink-soft)}
 .picked b{color:var(--ink);font-weight:500}
+.applyhint{font-size:12.5px;color:var(--signal);margin-top:4px}
 .cmds{font-family:var(--mono);font-size:12.5px;color:var(--signal);white-space:pre-wrap;word-break:break-all;margin-top:3px}
 .actions{display:flex;gap:8px;flex:none}
 button.go{appearance:none;font:inherit;font-size:13.5px;font-weight:500;padding:9px 18px;border-radius:7px;
@@ -174,7 +175,9 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
     <br><br>
     <span style="font-size:13.5px;color:var(--muted)">
       It opened by itself when you installed, and refreshes itself whenever you add a
-      theme with <code>Install-TerminalTheme</code>.
+      theme with <code>Install-TerminalTheme</code>. Picking a theme or a design here and
+      pressing <strong>Apply</strong> changes your terminal directly - nothing to copy or
+      paste. Your browser will ask once whether to allow it.
     </span>
   </div>
 
@@ -268,10 +271,12 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
     <div class="picked">
       <div id="pickedText"></div>
       <div class="cmds" id="pickedCmds"></div>
+      <div class="applyhint" id="applyHint" hidden>Applied. The window repaints now; the prompt appears in your next terminal.</div>
     </div>
     <div class="actions">
       <button class="ghost" id="clear" type="button">Reset</button>
-      <button class="go" id="copy" type="button">Copy commands</button>
+      <button class="ghost" id="copy" type="button" title="Copy the equivalent commands instead">Copy</button>
+      <button class="go" id="apply" type="button">Apply</button>
     </div>
   </div>
 </div>
@@ -671,15 +676,44 @@ function renderBar() {
   document.getElementById("pickedCmds").textContent = commands().join("\n");
 }
 
+/* Applying goes through a cyc:// link, which the installer registered to a
+   PowerShell handler. A page opened from disk cannot run anything itself, and
+   the alternative - printing a command to paste - is the thing this replaces.
+   The URL carries names only; the handler checks each against what is actually
+   installed and refuses anything else. */
+function applyUrl() {
+  const p = new URLSearchParams();
+  p.set("theme", sel.theme);
+  if (sel.design) {
+    p.set("design", sel.design);
+    if (!paired) p.set("mode", "original");
+    else {
+      if (adjB) p.set("b", adjB);
+      if (adjS) p.set("s", adjS);
+    }
+  }
+  return "cyc://apply?" + p.toString();
+}
+
+document.getElementById("apply").addEventListener("click", () => {
+  const btn = document.getElementById("apply");
+  window.location.href = applyUrl();
+  btn.textContent = "Applied";
+  btn.disabled = true;
+  const hint = document.getElementById("applyHint");
+  hint.hidden = false;
+  setTimeout(() => { btn.textContent = "Apply"; btn.disabled = false; }, 2600);
+});
+
 document.getElementById("copy").addEventListener("click", async () => {
   const btn = document.getElementById("copy");
   try {
     await navigator.clipboard.writeText(commands().join("\n"));
-    btn.textContent = "Copied — paste it to Claude";
+    btn.textContent = "Copied";
   } catch {
-    btn.textContent = "Select the text to copy";
+    btn.textContent = "Select the text";
   }
-  setTimeout(() => { btn.textContent = "Copy commands"; }, 2600);
+  setTimeout(() => { btn.textContent = "Copy"; }, 2600);
 });
 
 document.getElementById("clear").addEventListener("click", () => {
