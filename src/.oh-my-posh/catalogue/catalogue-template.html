@@ -166,6 +166,20 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
     <p class="lede">Every design rendered against the same short git repository, so what differs between these is the design and not the context. Pick a theme, pick a prompt, copy the commands. The settings behind them live in the <a href="https://claude.ai/code/artifact/b249684e-4846-4ca4-9487-4770ef534887">Terminal Control Room</a>.</p>
   </header>
 
+  <div class="note">
+    <strong>Opening this again.</strong> This page is a file on your machine, at
+    <code>~\.oh-my-posh\catalogue\theme-catalogue.html</code>. From any PowerShell window:
+    <br><br>
+    <code style="font-size:13.5px;color:var(--signal)">catalogue</code>
+    <br><br>
+    <span style="font-size:13.5px;color:var(--muted)">
+      It opened by itself when you installed. After adding a theme with
+      <code>Install-TerminalTheme</code>, this page will not show it until rebuilt:
+      <code>pwsh -NoProfile -File ~/.oh-my-posh/catalogue/rebuild.ps1</code>
+    </span>
+  </div>
+
+
   <h2>Themes</h2>
   <p class="sub">A theme moves everything at once — window background, the 16 ANSI colours, the prompt, and the Claude Code status line. This is the full window, including the status line as it will look.</p>
 
@@ -236,19 +250,6 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
 
   <div class="grid" id="designs"></div>
   <p class="empty" id="empty" hidden>No design matches those filters.</p>
-
-  <div class="note">
-    <strong>Opening this again.</strong> This page is a file on your machine, at
-    <code>~\.oh-my-posh\catalogue\theme-catalogue.html</code>. From any PowerShell window:
-    <br><br>
-    <code style="font-size:13.5px;color:var(--signal)">catalogue</code>
-    <br><br>
-    <span style="font-size:13.5px;color:var(--muted)">
-      It opened by itself when you installed. After adding a theme with
-      <code>Install-TerminalTheme</code>, this page will not show it until rebuilt:
-      <code>pwsh -NoProfile -File ~/.oh-my-posh/catalogue/rebuild.ps1</code>
-    </span>
-  </div>
 
   <div class="note">
     <strong>The glyphs travel with the page.</strong> The powerline separators and icons come from a 17 KB subset of JetBrainsMono Nerd Font embedded here, not from your system fonts — so these previews look the same on any machine, including anyone you send the link to.
