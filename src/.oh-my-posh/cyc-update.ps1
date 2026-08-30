@@ -221,4 +221,6 @@ function Invoke-CycUpdateCheck {
     }
 }
 
-Set-Alias update-cyc Update-Cyc
+# No alias here. 'update-cyc' and 'Update-Cyc' are the same name to PowerShell,
+# and an alias outranks a function, so aliasing one to the other makes the name
+# resolve to itself and stop working entirely.

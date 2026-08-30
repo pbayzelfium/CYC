@@ -157,6 +157,28 @@ function Show-Catalogue {
     <#  Open the theme catalogue in a browser: every prompt design rendered
         against the same repo, with filters, full previews, and brightness and
         saturation sliders whose values are carried into the command you copy.  #>
+    # Check before opening, so what opens is the current one. Six bytes over
+    # https with a short timeout, and silence on every way that can fail - an
+    # unreachable server must never be the reason the catalogue does not open.
+    if (Get-Command Test-CycUpdate -ErrorAction SilentlyContinue) {
+        try {
+            $u = Test-CycUpdate -Quiet
+            if ($u.Available) {
+                Write-Host ""
+                Write-Host "  We detected an update: $($u.Current) -> $($u.Latest)" -ForegroundColor Cyan
+                Write-Host "  Installing it first, so you open the current catalogue." -ForegroundColor DarkGray
+                Write-Host "  Nothing you set up will change." -ForegroundColor DarkGray
+                # -NoOpen: the page is opened below, once, either way.
+                Update-Cyc -NoOpen
+            }
+        } catch {
+            # Never block the catalogue over an update - but do not hide it
+            # either. A silent catch here is what let a broken updater look
+            # exactly like an up-to-date one.
+            Write-Host "  (update check failed: $($_.Exception.Message))" -ForegroundColor DarkYellow
+        }
+    }
+
     $page = Join-Path $script:OmpRoot 'catalogue\theme-catalogue.html'
     if (-not (Test-Path $page)) {
         Write-Host "No catalogue found at $page" -ForegroundColor Red

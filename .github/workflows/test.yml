@@ -100,6 +100,47 @@ jobs:
           }
           Write-Host "VERSION $v, stamped in"
 
+      - name: The catalogue checks before it opens
+        shell: pwsh
+        run: |
+          # Both halves of this failed silently once. Update-Cyc was shadowed by
+          # an alias of its own name - aliases outrank functions, so the name
+          # resolved to itself and stopped existing - and the catch around the
+          # check swallowed the error, leaving a broken updater looking exactly
+          # like an up-to-date one. Assert the order, not the intention.
+          . ./src/profile-block.ps1
+
+          if ((Get-Command Update-Cyc).CommandType -ne 'Function') {
+            Write-Error "Update-Cyc resolves to a $((Get-Command Update-Cyc).CommandType), not a Function"
+            exit 1
+          }
+
+          $script:log = @()
+          function Update-Cyc { param([switch]$NoOpen) $script:log += 'UPDATE' }
+          function Start-Process { param([Parameter(Position=0)]$FilePath) $script:log += 'OPEN' }
+
+          function Test-CycUpdate { param([switch]$Quiet)
+            [pscustomobject]@{Current='1.0.0';Latest='9.9.9';Available=$true;Reachable=$true} }
+          $script:log = @(); Show-Catalogue *>&1 | Out-Null
+          if (($script:log -join ',') -ne 'UPDATE,OPEN') {
+            Write-Error "expected UPDATE then OPEN, got: $($script:log -join ',')"; exit 1
+          }
+
+          function Test-CycUpdate { param([switch]$Quiet)
+            [pscustomobject]@{Current='9.9.9';Latest='9.9.9';Available=$false;Reachable=$true} }
+          $script:log = @(); Show-Catalogue *>&1 | Out-Null
+          if (($script:log -join ',') -ne 'OPEN') {
+            Write-Error "an up-to-date install must just open, got: $($script:log -join ',')"; exit 1
+          }
+
+          # A failing check must never be the reason the catalogue does not open.
+          function Test-CycUpdate { param([switch]$Quiet) throw 'offline' }
+          $script:log = @(); Show-Catalogue *>&1 | Out-Null
+          if (($script:log -join ',') -ne 'OPEN') {
+            Write-Error "offline must still open the catalogue, got: $($script:log -join ',')"; exit 1
+          }
+          Write-Host 'checks first, opens once, opens anyway when offline'
+
       - name: Test suite
         shell: pwsh
         run: pwsh -NoProfile -File test-install.ps1

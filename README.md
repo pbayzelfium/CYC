@@ -124,6 +124,10 @@ We detected an update: 1.1.0 -> 1.2.0
 Installing it now. Nothing you set up will change.
 ```
 
+Opening the catalogue checks too, and installs first, so what opens is the current
+one. If the check fails the catalogue still opens - an unreachable server is never a
+reason not to show you the page.
+
 You can also ask at any time - from a terminal, or with **Check for updates** in the
 catalogue's header, which opens a console window so you can watch it:
 
