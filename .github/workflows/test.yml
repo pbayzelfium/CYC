@@ -127,7 +127,7 @@ jobs:
           }
 
           $script:log = @()
-          function Update-Cyc { param([switch]$NoOpen) $script:log += 'UPDATE' }
+          function Update-Cyc { param([switch]$NoOpen, $Known) $script:log += 'UPDATE' }
           function Start-Process { param([Parameter(Position=0)]$FilePath) $script:log += 'OPEN' }
 
           function Test-CycUpdate { param([switch]$Quiet)

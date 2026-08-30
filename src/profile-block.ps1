@@ -157,34 +157,20 @@ function Show-Catalogue {
     <#  Open the theme catalogue in a browser: every prompt design rendered
         against the same repo, with filters, full previews, and brightness and
         saturation sliders whose values are carried into the command you copy.  #>
-    # Check before opening, so what opens is the current one. Six bytes over
-    # https with a short timeout, and silence on every way that can fail - an
+    # Check before opening, so what opens is the current one. One line: a bar
+    # while it asks, erased when it answers, and one sentence left behind. An
     # unreachable server must never be the reason the catalogue does not open.
     if (Get-Command Test-CycUpdate -ErrorAction SilentlyContinue) {
         try {
-            $u = Test-CycUpdate -Quiet
-            if ($u.Available) {
-                Write-Host ""
-                Write-Host "  We detected an update: $($u.Current) -> $($u.Latest)" -ForegroundColor Cyan
-                Write-Host "  Installing it first, so you open the current catalogue." -ForegroundColor DarkGray
-                Write-Host "  Nothing you set up will change." -ForegroundColor DarkGray
-                # -NoOpen: the page is opened below, once, either way.
-                Update-Cyc -NoOpen
-            }
-            elseif ($u.Reachable) {
-                # Say it even when there is nothing to say. A silent check and a
-                # broken one look identical, which is how a dead updater went
-                # unnoticed once already.
-                Write-Host "  CYC $($u.Current) - up to date" -ForegroundColor DarkGray
-            }
-            else {
-                Write-Host "  (could not check for updates)" -ForegroundColor DarkGray
-            }
+            $u = Test-CycUpdate -Quiet -ShowProgress
+            if ($u.Available) { Update-Cyc -NoOpen -Known $u }
+            elseif ($u.Reachable) { Write-CycLine "CYC $($u.Current) - up to date" -Dim }
+            else { Write-CycLine "CYC - could not check for updates" -Dim }
         } catch {
             # Never block the catalogue over an update - but do not hide it
             # either. A silent catch here is what let a broken updater look
             # exactly like an up-to-date one.
-            Write-Host "  (update check failed: $($_.Exception.Message))" -ForegroundColor DarkYellow
+            Write-CycLine "CYC - update check failed: $($_.Exception.Message)" -Dim
         }
     }
 

@@ -52,35 +52,32 @@ if ($action -eq 'update') {
     if ($WhatIfOnly) { Note 'would check for updates, and install one if found'; exit 0 }
 
     $script = @"
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 . '$updater'
+
+# One line, not a report. Update-Cyc draws the bar while it works and leaves a
+# single sentence: up to date, updated, or why not. Nothing else belongs in a
+# window someone opened by pressing a button.
 Write-Host ''
-Write-Host '  Checking for updates...' -ForegroundColor Cyan
-`$c = Test-CycUpdate -Quiet
-if (-not `$c.Reachable) {
+`$before = Get-CycVersion
+Update-Cyc -NoOpen
+`$after = Get-CycVersion
+
+if (`$after -ne `$before) {
     Write-Host ''
-    Write-Host '  Could not reach the update server.' -ForegroundColor Yellow
-    Write-Host '  Check your connection and try again.' -ForegroundColor DarkGray
-} elseif (-not `$c.Available) {
-    Write-Host ''
-    Write-Host "  You are on the latest version (`$(`$c.Current))." -ForegroundColor Green
-} else {
-    Write-Host ''
-    Write-Host "  Update found: `$(`$c.Current) -> `$(`$c.Latest)" -ForegroundColor Cyan
-    Write-Host ''
-    Write-Host '  Close your other terminal windows now.' -ForegroundColor Yellow
-    Write-Host '  They are running the old profile, and it is replaced by this.' -ForegroundColor DarkGray
-    Write-Host ''
-    Start-Sleep -Seconds 4
-    Update-Cyc -NoOpen
-    Write-Host '  Opening a fresh terminal...' -ForegroundColor DarkGray
+    Write-Host '  Close your other terminal windows - they are running the old profile.' -ForegroundColor DarkGray
     `$wt = Get-Command wt.exe -ErrorAction SilentlyContinue
     if (`$wt) { Start-Process wt.exe } else { Start-Process (Get-Process -Id `$PID).Path }
     `$page = Join-Path '$root' 'catalogue\theme-catalogue.html'
     if (Test-Path `$page) { Start-Process `$page }
+    Write-Host ''
+    Write-Host '  Press any key to close.' -ForegroundColor DarkGray
+    `$null = `$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+} else {
+    # Nothing happened, so do not make them dismiss a window about it.
+    Write-Host ''
+    Start-Sleep -Milliseconds 2200
 }
-Write-Host ''
-Write-Host '  Press any key to close.' -ForegroundColor DarkGray
-`$null = `$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 "@
 
     $tmp = Join-Path $env:TEMP "cyc-update-run.ps1"

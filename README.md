@@ -140,6 +140,12 @@ We detected an update: 1.1.0 -> 1.2.0
 Installing it now. Nothing you set up will change.
 ```
 
+Checking is one line: a pastel-olive bar that fills while the request is actually in
+flight, erased when it answers, leaving a single sentence - the version when current,
+what it installed when not, or why it could not ask. The installer's own output goes
+to a log rather than the screen, so a routine update is quiet; a failed one says
+where the log is.
+
 Opening the catalogue checks too, and installs first, so what opens is the current
 one. If the check fails the catalogue still opens - an unreachable server is never a
 reason not to show you the page.
