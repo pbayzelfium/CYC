@@ -37,14 +37,34 @@ function Get-CycLatest {
         Silence is the right answer for a failed check: no network, a proxy, a
         captive portal on a hotel wifi. None of those are the user's problem to
         hear about on a session start.  #>
+    # raw.githubusercontent is served through a CDN that holds each file for a
+    # few minutes. That window lands exactly when someone presses "check for
+    # updates" - just after a release - and answers with the version they
+    # already have. Neither no-cache headers nor a unique query string move it:
+    # measured, all three still returned the stale value while the API returned
+    # the new one. So ask the API first, which is not cached, and keep raw as
+    # the fallback for when it is rate limited or blocked.
+    $ProgressPreference = 'SilentlyContinue'
+    $headers = @{
+        'User-Agent'    = 'cyc-update-check'
+        'Cache-Control' = 'no-cache'
+        'Pragma'        = 'no-cache'
+    }
+
     try {
-        $ProgressPreference = 'SilentlyContinue'
-        $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 4 `
-                -Uri "$script:CycRepo/VERSION" `
-                -Headers @{ 'Cache-Control' = 'no-cache' }
+        $r = Invoke-RestMethod -TimeoutSec 5 -Headers $headers `
+                -Uri 'https://api.github.com/repos/pbayzelfium/CYC/contents/VERSION?ref=main'
+        $v = ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($r.content)) -replace '[^\d\.]', '').Trim()
+        if ($v -match '^\d+(\.\d+){0,3}$') { return $v }
+    } catch { }
+
+    try {
+        $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 4 -Headers $headers `
+                -Uri "$script:CycRepo/VERSION"
         $v = ($r.Content -replace '[^\d\.]', '').Trim()
         if ($v -match '^\d+(\.\d+){0,3}$') { return $v }
     } catch { }
+
     $null
 }
 
@@ -128,7 +148,8 @@ function Update-Cyc {
         Write-Host "  downloading..." -ForegroundColor DarkGray
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -UseBasicParsing -TimeoutSec 60 `
-            -Uri "$script:CycRepo/install.ps1" -OutFile $installer
+            -Uri "$script:CycRepo/install.ps1" -OutFile $installer `
+            -Headers @{ 'Cache-Control' = 'no-cache'; 'Pragma' = 'no-cache' }
     } catch {
         Write-Host "  Could not download the update: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host ""
