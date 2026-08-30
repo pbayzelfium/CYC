@@ -114,6 +114,12 @@ jobs:
           . ./src/.oh-my-posh/cyc-update.ps1
           . ./src/profile-block.ps1
 
+          # Show-Catalogue returns early when the page is missing, and this
+          # step runs before the install, so give it one to open.
+          $page = Join-Path $HOME '.oh-my-posh/catalogue/theme-catalogue.html'
+          New-Item -ItemType Directory -Force (Split-Path $page) | Out-Null
+          Set-Content $page '<!doctype html><title>stand-in</title>'
+
           if ((Get-Command Update-Cyc).CommandType -ne 'Function') {
             Write-Error "Update-Cyc resolves to a $((Get-Command Update-Cyc).CommandType), not a Function"
             exit 1
