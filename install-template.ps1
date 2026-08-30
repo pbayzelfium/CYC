@@ -34,6 +34,12 @@
   this cannot repair. Moves it aside, keeping a copy, so Windows Terminal writes
   a fresh one and the theming can be applied.
 
+.PARAMETER Update
+  Install a newer build over this one, keeping everything you set up: your
+  theme, your prompt design, the brightness and saturation you settled on, the
+  themes you installed, and your own edits to the prompt config. Only the
+  program is replaced. Normally reached through Update-Cyc rather than by hand.
+
 .PARAMETER Force
   Re-run over an existing install. Without this, an existing install is left
   alone: re-running replaces the prompt config with the shipped generic one,
@@ -53,6 +59,8 @@ param(
     [switch]$DryRun,
     [switch]$SkipCatalogue,
     [switch]$Force,
+    # Replace the program, keep what the user set up. See .PARAMETER Update.
+    [switch]$Update,
     # Do not open the catalogue at the end. Set automatically in tests and CI.
     [switch]$NoOpen,
     # If Windows Terminal's settings file is already invalid, move it aside so
@@ -69,6 +77,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $script:Failed = @()
+
+# Stamped in by build-installer.py from the repo's VERSION file, and written to
+# ~/.oh-my-posh/version.txt so a later run can tell what is already here.
+$CycVersion = '#__VERSION__'
+
+# Files that stop being ours the moment the program is used. palettes.json is
+# the record of which themes someone installed; cyc.omp.json is the prompt they
+# may have edited. An update leaves both alone - taking away what someone set
+# up is worse than shipping them nothing at all.
+$UserOwned = @(
+    '.oh-my-posh/cyc.omp.json'
+    '.oh-my-posh/palettes.json'
+)
 
 $Root = if ($TestRoot) { (New-Item -ItemType Directory -Force $TestRoot).FullName } else { $HOME }
 $ProfileFile = if ($TestRoot) { Join-Path $Root 'Documents\PowerShell\profile.ps1' } else { $PROFILE }
@@ -125,6 +146,35 @@ function Get-PayloadFile {
     (Invoke-WebRequest -UseBasicParsing -Uri $url -Headers @{ 'User-Agent' = 'cyc-installer' }).Content
 }
 
+function Merge-Palettes {
+    <#  Add themes this build brings, remove none.
+
+        palettes.json is where Install-TerminalTheme records what someone
+        added, so overwriting it would silently uninstall every theme they
+        chose. Any key already present wins, including one this build also
+        ships: their copy may carry adjustments, and an update is not the place
+        to overrule them.  #>
+    param([string]$Path, [string]$Shipped)
+
+    $have  = Get-Content $Path -Raw | ConvertFrom-Json
+    $new   = $Shipped | ConvertFrom-Json
+    $added = @()
+    foreach ($prop in $new.PSObject.Properties) {
+        if (-not $have.PSObject.Properties[$prop.Name]) {
+            $have | Add-Member $prop.Name $prop.Value -Force
+            $added += $prop.Name
+        }
+    }
+    if ($added.Count) {
+        Copy-Item $Path "$Path.bak" -Force
+        Save-JsonSafely -Object $have -Path $Path
+        Say "themes: added $($added -join ', '), kept all of yours" DarkGray
+    } else {
+        $n = @($have.PSObject.Properties | Where-Object { $_.Name -notlike '_*' }).Count
+        Say "themes: your $n are unchanged" DarkGray
+    }
+}
+
 function Write-Payload {
     param([string]$Dest)
     $full = Join-Path $Root $Dest
@@ -132,6 +182,21 @@ function Write-Payload {
     $dir = Split-Path $full -Parent
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
     $text = Get-PayloadFile $Dest
+
+    # An update replaces the program and nothing else.
+    if ($Update -and (Test-Path $full) -and ($UserOwned -contains $Dest)) {
+        if ($Dest -eq '.oh-my-posh/palettes.json') {
+            try { Merge-Palettes -Path $full -Shipped $text }
+            catch { Warn "could not merge your themes, so they were left exactly as they were: $($_.Exception.Message)" }
+        } elseif ((Get-Content $full -Raw) -ne $text) {
+            # Theirs stays. This build's copy goes beside it, so a change worth
+            # having is there to take rather than lost.
+            [IO.File]::WriteAllText("$full.new", $text)
+            Say "kept your $Dest - this build's version is beside it as .new" DarkGray
+        }
+        return
+    }
+
     Backup $full
     [IO.File]::WriteAllText($full, $text)
     Say "wrote $Dest" DarkGray
@@ -158,7 +223,7 @@ $existing = @(
     (Join-Path $Root '.oh-my-posh\cyc.omp.json')
 ) | Where-Object { Test-Path $_ }
 
-if ($existing -and -not $Force -and -not $DryRun) {
+if ($existing -and -not $Force -and -not $Update -and -not $DryRun) {
     $custom = $false
     $z = Join-Path $Root '.oh-my-posh\cyc.omp.json'
     if (Test-Path $z) { $custom = (Get-Content $z -Raw) -match 'mapped_locations' }
@@ -540,12 +605,19 @@ else {
             cursorShape    = 'filledBox'
             antialiasingMode = 'grayscale'
         }.GetEnumerator()) {
+            # On an update these are already answered, and the answer may be
+            # theirs: colorScheme is the theme they picked, and resetting it to
+            # the shipped default would undo the whole point of the program.
+            if ($Update -and $d.PSObject.Properties[$kv.Key]) { continue }
             $d | Add-Member $kv.Key $kv.Value -Force
         }
+        if ($Update) { Say "kept your colour scheme: $($d.colorScheme)" DarkGray }
 
-        # prefer PowerShell 7 as the default profile
-        $pwshProfile = $wt.profiles.list | Where-Object { $_.source -eq 'Windows.Terminal.PowershellCore' } | Select-Object -First 1
-        if ($pwshProfile) { $wt | Add-Member defaultProfile $pwshProfile.guid -Force }
+        # prefer PowerShell 7 as the default profile, unless they have chosen
+        if (-not ($Update -and $wt.defaultProfile)) {
+            $pwshProfile = $wt.profiles.list | Where-Object { $_.source -eq 'Windows.Terminal.PowershellCore' } | Select-Object -First 1
+            if ($pwshProfile) { $wt | Add-Member defaultProfile $pwshProfile.guid -Force }
+        }
 
         Save-JsonSafely -Object $wt -Path $wtSettings
         Say "appearance applied" DarkGray
@@ -609,6 +681,32 @@ else {
     } catch { Warn "build-variants failed: $($_.Exception.Message)" }
 }
 
+# --- 10a. record what this is, and check their choices still resolve --------
+# The one case where an update has to move a setting is when the thing it points
+# at is gone from the new build. Say so; landing someone somewhere else without
+# a word is how a themer loses trust in a theme program.
+if (-not $DryRun) {
+    Set-Content (Join-Path $Root '.oh-my-posh\version.txt') $CycVersion -Encoding UTF8
+
+    if ($Update) {
+        $activeDesign = Join-Path $Root '.oh-my-posh\active-design.txt'
+        if (Test-Path $activeDesign) {
+            $d = (Get-Content $activeDesign -Raw).Trim()
+            $stillThere = ($d -eq 'cyc') -or
+                          (Test-Path (Join-Path $Root ".oh-my-posh\themes\$d.omp.json")) -or
+                          (Test-Path (Join-Path $Root ".oh-my-posh\$d.omp.json"))
+            if ($d -and -not $stillThere) {
+                Write-Host ""
+                Write-Host "  The prompt design you were using, '$d', is not in this build." -ForegroundColor Yellow
+                Write-Host "  Switched back to the default. Everything else is as you left it." -ForegroundColor Yellow
+                Set-Content $activeDesign 'cyc' -Encoding UTF8
+                Set-Content (Join-Path $Root '.oh-my-posh\active-theme.txt') `
+                    (Join-Path $Root '.oh-my-posh\cyc.omp.json') -Encoding UTF8
+            }
+        }
+    }
+}
+
 # --- done -------------------------------------------------------------------
 # --- 10b. the cyc:// link handler -------------------------------------------
 # So the catalogue's buttons can apply a theme directly instead of handing you
@@ -654,7 +752,10 @@ if ($script:Failed.Count) {
     Write-Host "  Finished with $($script:Failed.Count) warning(s):" -ForegroundColor Yellow
     $script:Failed | ForEach-Object { Write-Host "    - $_" -ForegroundColor Yellow }
 } else {
-    Write-Host "  Done." -ForegroundColor Green
+    Write-Host "  Done$(if ($CycVersion -notmatch '__') { " - CYC $CycVersion" })." -ForegroundColor Green
+    if ($Update) {
+        Write-Host "  Your theme, prompt design and installed themes were kept." -ForegroundColor DarkGray
+    }
 }
 
 Write-Host ""

@@ -25,6 +25,7 @@ FILES = [
     (CLAUDE / "commands/terminal-theme.md", ".claude/commands/terminal-theme.md", True),
     (ROOT / "share/uninstall.ps1", ".oh-my-posh/uninstall.ps1", True),
     (ROOT / "cyc-protocol.ps1", ".oh-my-posh/cyc-protocol.ps1", True),
+    (ROOT / "cyc-update.ps1",   ".oh-my-posh/cyc-update.ps1",   True),
     (ROOT / "catalogue/render-prompts.py",     ".oh-my-posh/catalogue/render-prompts.py",     False),
     (ROOT / "catalogue/subset-font.py",        ".oh-my-posh/catalogue/subset-font.py",        False),
     (ROOT / "catalogue/build-catalogue.py",    ".oh-my-posh/catalogue/build-catalogue.py",    False),
@@ -137,12 +138,23 @@ blob = "\n".join(
 
 TEMPLATE = (ROOT / "share" / "install-template.ps1").read_text(encoding="utf-8")
 OUT.parent.mkdir(parents=True, exist_ok=True)
-OUT.write_text(TEMPLATE.replace("#__MANIFEST__", blob), encoding="utf-8")
+# The version is the repo's, not this machine's: VERSION is what the update
+# check downloads and compares against, so the number baked into the installer
+# has to be the same one.
+VERSION = (OUT.parent / "VERSION").read_text(encoding="utf-8").strip()
+assert re.fullmatch(r"\d+(\.\d+){1,3}", VERSION), f"bad VERSION: {VERSION!r}"
+
+OUT.write_text(
+    TEMPLATE.replace("#__MANIFEST__", blob).replace("#__VERSION__", VERSION),
+    encoding="utf-8",
+)
 
 kb = OUT.stat().st_size / 1024
 print(f"wrote {OUT}  ({kb:.0f} KB, {len(payload)} files)")
 body = OUT.read_text(encoding="utf-8")
 assert "#__MANIFEST__" not in body
+assert "#__VERSION__" not in body, "version token survived - the update check would never fire"
+print(f"version {VERSION}")
 assert len(body) < 60_000, "installer got big again - is something embedded?"
 print("manifest substituted")
 

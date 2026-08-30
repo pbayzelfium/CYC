@@ -5,6 +5,7 @@
   Windows launches this with the whole URL as the first argument:
 
       cyc://apply?theme=nord&design=atomic&b=-20&s=-34
+      cyc://update
 
   SECURITY. A protocol handler is a way for any web page to run something on
   this machine, so nothing here is passed to a shell. Every value is matched
@@ -34,8 +35,59 @@ function Fail { param($m) Note "REFUSED: $m"; exit 1 }
 if (-not $Url) { Fail 'no url' }
 Note "url: $Url"
 
+# --- what is being asked for ------------------------------------------------
+if ($Url -notmatch '^cyc://([a-z]{1,12})') { Fail 'not a cyc:// url' }
+$action = $Matches[1]
+if ($action -notin @('apply', 'update')) { Fail "unknown action: $action" }
+
+if ($action -eq 'update') {
+    # This handler is registered windowless, because applying a theme has
+    # nothing to show. An update does: it takes a minute and it says what it
+    # kept. So hand it to a window someone can actually read.
+    $updater = Join-Path $root 'cyc-update.ps1'
+    if (-not (Test-Path $updater)) { Fail 'the updater is not installed' }
+
+    $script = @"
+. '$updater'
+Write-Host ''
+Write-Host '  Checking for updates...' -ForegroundColor Cyan
+`$c = Test-CycUpdate -Quiet
+if (-not `$c.Reachable) {
+    Write-Host ''
+    Write-Host '  Could not reach the update server.' -ForegroundColor Yellow
+    Write-Host '  Check your connection and try again.' -ForegroundColor DarkGray
+} elseif (-not `$c.Available) {
+    Write-Host ''
+    Write-Host "  You are on the latest version (`$(`$c.Current))." -ForegroundColor Green
+} else {
+    Write-Host ''
+    Write-Host "  Update found: `$(`$c.Current) -> `$(`$c.Latest)" -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host '  Close your other terminal windows now.' -ForegroundColor Yellow
+    Write-Host '  They are running the old profile, and it is replaced by this.' -ForegroundColor DarkGray
+    Write-Host ''
+    Start-Sleep -Seconds 4
+    Update-Cyc -NoOpen
+    Write-Host '  Opening a fresh terminal...' -ForegroundColor DarkGray
+    `$wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+    if (`$wt) { Start-Process wt.exe } else { Start-Process (Get-Process -Id `$PID).Path }
+    `$page = Join-Path '$root' 'catalogue\theme-catalogue.html'
+    if (Test-Path `$page) { Start-Process `$page }
+}
+Write-Host ''
+Write-Host '  Press any key to close.' -ForegroundColor DarkGray
+`$null = `$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+"@
+
+    $tmp = Join-Path $env:TEMP "cyc-update-run.ps1"
+    Set-Content -Path $tmp -Value $script -Encoding UTF8
+    Note 'update requested - opening a window'
+    Start-Process (Get-Process -Id $PID).Path `
+        -ArgumentList '-NoLogo', '-ExecutionPolicy', 'Bypass', '-File', "`"$tmp`""
+    exit 0
+}
+
 # --- parse, without trusting anything --------------------------------------
-if ($Url -notmatch '^cyc://') { Fail 'not a cyc:// url' }
 $query = ($Url -replace '^cyc://[^?]*\??', '').TrimEnd('/')
 $args  = @{}
 foreach ($pair in ($query -split '&')) {

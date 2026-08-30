@@ -407,6 +407,16 @@ Set-Alias tt Set-TerminalTheme
 $ttTools = Join-Path $OmpRoot 'theme-tools.ps1'
 if (Test-Path $ttTools) { . $ttTools }
 
+# Test-CycUpdate / Update-Cyc
+$ttUpdate = Join-Path $OmpRoot 'cyc-update.ps1'
+if (Test-Path $ttUpdate) {
+    . $ttUpdate
+    # Once a day, in an interactive console only. Everything it could go wrong
+    # about - no network, a held lock, a slow server - it stays quiet about, so
+    # the worst case is a terminal that opens exactly as it always does.
+    Invoke-CycUpdateCheck
+}
+
 # --- small conveniences -----------------------------------------------------
 
 function .. { Set-Location .. }

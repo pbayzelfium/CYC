@@ -114,6 +114,41 @@ prompt designs.
 It leaves PowerShell 7, Windows Terminal, git, Python, the font and Terminal-Icons alone -
 they are general tools and something else may now depend on them.
 
+## Updating
+
+It checks once a day, on a new terminal, against a six-byte `VERSION` file in this
+repository. When there is a newer build it says so and installs it:
+
+```
+We detected an update: 1.1.0 -> 1.2.0
+Installing it now. Nothing you set up will change.
+```
+
+You can also ask at any time - from a terminal, or with **Check for updates** in the
+catalogue's header, which opens a console window so you can watch it:
+
+```powershell
+Test-CycUpdate   # is there one?
+Update-Cyc       # install it
+```
+
+**An update takes nothing away.** Your theme, your prompt design, the brightness and
+saturation you settled on, the themes you installed, and your own edits to the prompt
+config are all kept - only the program is replaced. If you edited `cyc.omp.json`, yours
+stays and the new one is written beside it as `cyc.omp.json.new`, yours to take or ignore.
+
+The single exception is a prompt design that no longer exists in the new build. Then it
+falls back to the default **and says so** - it will not quietly land you somewhere else.
+
+Every one of those is asserted by the test suite, and each assertion has been checked to
+fail when the preserving is removed.
+
+To turn the daily check off:
+
+```powershell
+New-Item ~/.oh-my-posh/no-auto-update -ItemType File
+```
+
 ## Options
 
 | Flag | Effect |
@@ -123,6 +158,7 @@ they are general tools and something else may now depend on them.
 | `-NoOpen` | Do not open the catalogue when it finishes |
 | `-SkipCatalogue` | Leave out the catalogue's build scripts. The catalogue itself is installed either way |
 | `-Source <dir>` | Install from a local copy of `src/` instead of fetching from GitHub |
+| `-Update` | Install a newer build over this one, keeping everything you set up. What `Update-Cyc` uses |
 | `-TestRoot <dir>` | Install into a throwaway directory; used by the test suite |
 
 ## It tries not to break what you have

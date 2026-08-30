@@ -170,6 +170,8 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
       <div class="applyhint" id="applyHint" hidden>Applied. The window repaints now; the prompt appears in your next terminal.</div>
     </div>
     <div class="actions">
+      <button class="ghost" id="update" type="button"
+              title="Check the repository for a newer build">Check for updates</button>
       <button class="ghost" id="clear" type="button">Reset</button>
       <button class="ghost" id="copy" type="button" title="Copy the equivalent commands instead">Copy</button>
       <button class="go" id="apply" type="button">Apply</button>
@@ -751,6 +753,16 @@ function readAdjust() {
 }
 ["adjB", "adjS"].forEach(id =>
   document.getElementById(id).addEventListener("input", readAdjust));
+// Checking happens in a console window, because an update has things worth
+// reading: what it found, what it kept, and when to close your terminals.
+document.getElementById("update").addEventListener("click", () => {
+  const b = document.getElementById("update");
+  b.textContent = "Checking in the console...";
+  b.disabled = true;
+  location.href = "cyc://update";
+  setTimeout(() => { b.textContent = "Check for updates"; b.disabled = false; }, 6000);
+});
+
 document.getElementById("adjReset").addEventListener("click", () => {
   document.getElementById("adjB").value = 0;
   document.getElementById("adjS").value = 0;

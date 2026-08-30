@@ -27,6 +27,10 @@ param([string]$Installer = (Join-Path $PSScriptRoot 'install.ps1'))
 $ErrorActionPreference = 'Stop'
 $pass = 0; $fail = 0
 
+# The version the build was stamped with. Read from VERSION rather than typed,
+# so bumping the release does not silently turn this assertion into a lie.
+$ExpectVersion = (Get-Content (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim()
+
 function Check {
     param([string]$What, [scriptblock]$Test)
     try {
@@ -123,6 +127,64 @@ try {
         ($j.schemes.name | Group-Object | Where-Object Count -gt 1).Count -eq 0 }
     Check "their content still survives a second run" {
         (Get-Content $profileFile -Raw) -match 'do not delete me' }
+
+    # --- updating must take nothing away -------------------------------------
+    # An update replaces the program. Everything below is the person's own: the
+    # theme they installed, the prompt they edited, the colours they chose.
+    Write-Host ""
+    Write-Host "  Update" -ForegroundColor White
+
+    $omp  = Join-Path $root '.oh-my-posh'
+    $palF = Join-Path $omp 'palettes.json'
+    $cfgF = Join-Path $omp 'cyc.omp.json'
+
+    # they installed a theme of their own
+    $pal = Get-Content $palF -Raw | ConvertFrom-Json
+    $pal | Add-Member 'their-theme' ([pscustomobject]@{
+        scheme = 'Their Scheme'; bg = '#101010'; fg = '#eeeeee'
+    }) -Force
+    $pal | ConvertTo-Json -Depth 12 | Set-Content $palF -Encoding UTF8
+
+    # they edited the prompt config
+    $cfg = Get-Content $cfgF -Raw
+    Set-Content $cfgF ($cfg -replace '"final_space"', '"their_edit": true, "final_space"') -Encoding UTF8
+
+    # they picked a colour scheme, which is the whole point of the program
+    $wtj = Get-Content $wt -Raw | ConvertFrom-Json
+    $wtj.profiles.defaults | Add-Member colorScheme 'Their Scheme' -Force
+    $wtj.profiles.defaults | Add-Member opacity 70 -Force
+    $wtj | ConvertTo-Json -Depth 32 | Set-Content $wt -Encoding UTF8
+
+    # and they are on an older build
+    Set-Content (Join-Path $omp 'version.txt') '1.0.0' -Encoding UTF8
+    Set-Content (Join-Path $omp 'active-design.txt') 'cyc' -Encoding UTF8
+
+    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -Update -NoOpen -Source (Join-Path $PSScriptRoot 'src') *>&1 | Out-Null
+
+    $pal2 = Get-Content $palF -Raw | ConvertFrom-Json
+    Check "KEPT the theme they installed" { $null -ne $pal2.PSObject.Properties['their-theme'] }
+    Check "KEPT its scheme name"          { $pal2.'their-theme'.scheme -eq 'Their Scheme' }
+    Check "KEPT the shipped themes too"   { $null -ne $pal2.PSObject.Properties['nord'] }
+    Check "KEPT their prompt edit"        { (Get-Content $cfgF -Raw) -match 'their_edit' }
+    Check "offered the new prompt beside it" { Test-Path "$cfgF.new" }
+
+    $wtj2 = Get-Content $wt -Raw | ConvertFrom-Json
+    Check "KEPT their colour scheme"      { $wtj2.profiles.defaults.colorScheme -eq 'Their Scheme' }
+    Check "KEPT their opacity"            { $wtj2.profiles.defaults.opacity -eq 70 }
+    Check "KEPT their own scheme entry"   { $wtj2.schemes.name -contains 'Their Scheme' }
+
+    Check "replaced the program"          { (Get-Content (Join-Path $root '.claude\statusline.ps1') -Raw).Length -gt 100 }
+    Check "recorded the new version"      { (Get-Content (Join-Path $omp 'version.txt') -Raw).Trim() -eq $ExpectVersion }.GetNewClosure()
+    Check "left their design alone"       { (Get-Content (Join-Path $omp 'active-design.txt') -Raw).Trim() -eq 'cyc' }
+
+    # The one case where a setting has to move: what it points at is gone.
+    Set-Content (Join-Path $omp 'active-design.txt') 'design-that-was-removed' -Encoding UTF8
+    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -Update -NoOpen -Source (Join-Path $PSScriptRoot 'src') *>&1 | Out-Null
+    Check "fell back when their design was removed from the build" {
+        (Get-Content (Join-Path $omp 'active-design.txt') -Raw).Trim() -eq 'cyc' }
+    Check "and still kept their theme"    {
+        $j = Get-Content $palF -Raw | ConvertFrom-Json
+        $null -ne $j.PSObject.Properties['their-theme'] }
 
     # --- uninstall: an uninstaller that never runs is just a promise --------
     Write-Host ""
