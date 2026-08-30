@@ -70,11 +70,14 @@ Installing without internet, or from a checkout: pass `-Source <dir>` pointing a
 
 ## Updating
 
-It keeps itself current, three ways:
+It keeps itself current, two ways - both of them you opening something:
 
-- **A new terminal** checks once a day, in an interactive console only, one window at a time.
 - **Opening the catalogue** checks first and installs before opening, so what opens is current.
 - **Check for updates** in the catalogue's header asks on demand, in a console window.
+
+**Starting a terminal checks nothing.** No network call, no background process, no scheduled
+task - a shell opens exactly as fast as it always did. CYC never runs when you did not start
+it.
 
 Each is one line: a bar that fills while the request is in flight, erased when it answers,
 leaving a single sentence - your version when current, what it installed when not, or why it
@@ -90,8 +93,8 @@ when the preserving is removed.
 Versions are odometer digits, not semver: each component runs 0-9 and carries into the one
 above, so 1.3.9 becomes 1.4.0.
 
-To stop the daily check: `New-Item ~/.oh-my-posh/no-auto-update -ItemType File`. The button
-and `Update-Cyc` still work.
+To stop the catalogue checking at all: `New-Item ~/.oh-my-posh/no-auto-update -ItemType File`.
+The button and `Update-Cyc` still work.
 
 <details>
 <summary>Installed before 1.1.0? One manual run, once</summary>

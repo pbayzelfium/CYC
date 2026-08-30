@@ -168,9 +168,9 @@ set and let him confirm.
 
 ## Keeping it current
 
-CYC updates itself: once a day on a new terminal, when the catalogue is opened, and on
-demand from the catalogue's **Check for updates** button. Each shows one olive line and
-installs if there is something to install.
+CYC updates itself when the catalogue is opened, and on demand from its **Check for
+updates** button. Each shows one olive line and installs if there is something to install.
+Starting a terminal checks nothing.
 
 ```
 pwsh -NoLogo -Command "Test-CycUpdate"   # is there a newer build?

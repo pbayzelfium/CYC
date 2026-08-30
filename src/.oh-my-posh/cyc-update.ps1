@@ -16,6 +16,10 @@
   from the new build, and then it says so rather than quietly landing you
   somewhere else.
 
+  It checks when the catalogue is opened, and when the button is pressed. It
+  does not check when a terminal starts: opening a shell is not launching this
+  program, and a prompt should not cost a network call or begin an install.
+
   It says all of that on one line. Progress is shown as a bar that fills while
   the work actually runs, and the line is erased when it finishes, leaving a
   single sentence behind.
@@ -23,7 +27,6 @@
 
 $script:CycRoot    = Join-Path $HOME '.oh-my-posh'
 $script:CycVerFile = Join-Path $script:CycRoot 'version.txt'
-$script:CycStamp   = Join-Path $script:CycRoot 'last-update-check.txt'
 $script:CycOptOut  = Join-Path $script:CycRoot 'no-auto-update'
 $script:CycRepo    = 'https://raw.githubusercontent.com/pbayzelfium/CYC/main'
 $script:CycApi     = 'https://api.github.com/repos/pbayzelfium/CYC/contents/VERSION?ref=main'
@@ -262,68 +265,6 @@ function Update-Cyc {
     } else {
         Write-CycLine "CYC - the update did not finish (exit $($proc.ExitCode)). Nothing you set up was changed." -Dim
         Write-CycLine "      the installer's output is in $log" -Dim
-    }
-}
-
-function Invoke-CycUpdateCheck {
-    <#  .SYNOPSIS The session-start check.
-
-        .DESCRIPTION
-        Runs at most once a day, and only in a real interactive console - never
-        while something is being piped or scripted, where a surprise install
-        would be indefensible. One window takes the lock, so opening six tabs
-        does not start six updates.
-
-        Turn it off by creating the file no-auto-update in ~/.oh-my-posh.  #>
-    [CmdletBinding(PositionalBinding = $false)]
-    param([switch]$Force)
-
-    if (-not $Force) {
-        if (Test-Path $script:CycOptOut) { return }
-        # Loading the profile block is how anything tests it, and this runs at
-        # load. Without these two, reading the code installs a build - which is
-        # exactly what happened, twice.
-        if ($env:CI) { return }
-        if ($env:CYC_NO_UPDATE_CHECK) { return }
-        if ($Host.Name -ne 'ConsoleHost') { return }
-        if (-not [Environment]::UserInteractive) { return }
-
-        # Once a day is often enough for a themer.
-        if (Test-Path $script:CycStamp) {
-            try {
-                $last = [datetime]::Parse((Get-Content $script:CycStamp -Raw).Trim())
-                if ((Get-Date) - $last -lt [timespan]::FromHours(24)) { return }
-            } catch { }
-        }
-    }
-
-    # One window only. CreateNew fails if the file exists, which is the point:
-    # it is a lock, not a flag.
-    $lock = Join-Path $script:CycRoot 'update.lock'
-    $fs = $null
-    try {
-        $fs = [IO.File]::Open($lock, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
-    } catch {
-        # Someone else holds it - unless it is stale, left by a window that was
-        # closed mid-check.
-        try {
-            if ((Get-Date) - (Get-Item $lock).LastWriteTime -gt [timespan]::FromMinutes(10)) {
-                Remove-Item $lock -Force -EA SilentlyContinue
-            }
-        } catch { }
-        return
-    }
-
-    try {
-        Set-Content $script:CycStamp (Get-Date -Format 'o') -Encoding UTF8
-        $check = Test-CycUpdate -Quiet
-        if (-not $check.Available) { return }
-        Update-Cyc
-    } catch {
-        # An update check must never be the reason a terminal fails to open.
-    } finally {
-        if ($fs) { $fs.Dispose() }
-        Remove-Item $lock -Force -EA SilentlyContinue
     }
 }
 

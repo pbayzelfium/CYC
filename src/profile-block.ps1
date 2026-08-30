@@ -160,7 +160,8 @@ function Show-Catalogue {
     # Check before opening, so what opens is the current one. One line: a bar
     # while it asks, erased when it answers, and one sentence left behind. An
     # unreachable server must never be the reason the catalogue does not open.
-    if (Get-Command Test-CycUpdate -ErrorAction SilentlyContinue) {
+    if ((Get-Command Test-CycUpdate -ErrorAction SilentlyContinue) -and
+        -not (Test-Path (Join-Path $script:OmpRoot 'no-auto-update'))) {
         try {
             $u = Test-CycUpdate -Quiet -ShowProgress
             if ($u.Available) { Update-Cyc -NoOpen -Known $u }
@@ -424,15 +425,11 @@ Set-Alias tt Set-TerminalTheme
 $ttTools = Join-Path $OmpRoot 'theme-tools.ps1'
 if (Test-Path $ttTools) { . $ttTools }
 
-# Test-CycUpdate / Update-Cyc
+# Test-CycUpdate / Update-Cyc. Loaded, not run: opening a shell is not
+# launching this program, so it costs no network call and can start nothing.
+# The check happens when the catalogue is opened, and on the button.
 $ttUpdate = Join-Path $OmpRoot 'cyc-update.ps1'
-if (Test-Path $ttUpdate) {
-    . $ttUpdate
-    # Once a day, in an interactive console only. Everything it could go wrong
-    # about - no network, a held lock, a slow server - it stays quiet about, so
-    # the worst case is a terminal that opens exactly as it always does.
-    Invoke-CycUpdateCheck
-}
+if (Test-Path $ttUpdate) { . $ttUpdate }
 
 # --- small conveniences -----------------------------------------------------
 
