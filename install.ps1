@@ -248,10 +248,21 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
         exit 1
     }
     Say "restarting in PowerShell 7..." Green
+    # Pass on whatever was actually given. Naming the parameters here by hand is
+    # how -Force came to be lost: it was added to the parameter block later and
+    # never added to this list, so it vanished at the handover and the second run
+    # behaved as though it had never been typed.
     $argv = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath)
-    if ($DryRun)        { $argv += '-DryRun' }
-    if ($SkipCatalogue) { $argv += '-SkipCatalogue' }
-    if ($TestRoot)      { $argv += @('-TestRoot', $TestRoot) }
+    foreach ($kv in $PSBoundParameters.GetEnumerator()) {
+        if ($kv.Value -is [switch]) {
+            if ($kv.Value.IsPresent) { $argv += "-$($kv.Key)" }
+        } elseif ($null -ne $kv.Value -and "$($kv.Value)" -ne '') {
+            $argv += @("-$($kv.Key)", "$($kv.Value)")
+        }
+    }
+    if ($PSBoundParameters.Count) {
+        Say "carrying over: $((@($PSBoundParameters.Keys) | Sort-Object) -join ', ')" DarkGray
+    }
     & $pwsh @argv
     exit $LASTEXITCODE
 }

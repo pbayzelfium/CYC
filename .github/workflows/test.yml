@@ -57,6 +57,33 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -File install.ps1 -DryRun -Source "$PWD/src"
 
+      - name: -Force survives the relaunch into PowerShell 7
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'relaunch'
+          New-Item -ItemType Directory -Force (Join-Path $root '.oh-my-posh') | Out-Null
+          Set-Content (Join-Path $root '.oh-my-posh\palettes.json') '{}'
+
+          # Start from Windows PowerShell 5.1, which is what the README tells
+          # people to use, so the installer has to hand itself over to 7.
+          $ps51 = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+          $out = & $ps51 -ExecutionPolicy Bypass -NoProfile -File install.ps1 `
+                   -TestRoot $root -Source "$PWD/src" -Force -NoOpen 2>&1 | Out-String
+
+          if ($out -match 'would install PowerShell 7') {
+            Write-Host 'no PowerShell 7 on this runner - nothing to hand over to'; exit 0
+          }
+          if ($out -notmatch 'restarting in PowerShell 7') {
+            Write-Host $out; Write-Error 'expected a handover from 5.1'; exit 1
+          }
+          $after = $out.Substring($out.IndexOf('restarting in PowerShell 7'))
+          if ($after -match 'already installed') {
+            Write-Host $out
+            Write-Error '-Force did not survive the relaunch: the second run refused to upgrade'
+            exit 1
+          }
+          Write-Host 'flags survived the handover'
+
       - name: Test suite
         shell: pwsh
         run: pwsh -NoProfile -File test-install.ps1
