@@ -118,16 +118,16 @@ if ($DryRun) { Say "DRY RUN - nothing will change" Yellow }
 
 # --- do not quietly overwrite an existing install ---------------------------
 # Re-running replaces the prompt config with the shipped generic one, so a
-# personalised zelfium.omp.json loses its edits. A .bak is left, but silence
+# personalised cyc.omp.json loses its edits. A .bak is left, but silence
 # is the wrong default when the cost is someone's own configuration.
 $existing = @(
     (Join-Path $Root '.oh-my-posh\palettes.json'),
-    (Join-Path $Root '.oh-my-posh\zelfium.omp.json')
+    (Join-Path $Root '.oh-my-posh\cyc.omp.json')
 ) | Where-Object { Test-Path $_ }
 
 if ($existing -and -not $Force -and -not $DryRun) {
     $custom = $false
-    $z = Join-Path $Root '.oh-my-posh\zelfium.omp.json'
+    $z = Join-Path $Root '.oh-my-posh\cyc.omp.json'
     if (Test-Path $z) { $custom = (Get-Content $z -Raw) -match 'mapped_locations' }
 
     Write-Host ""

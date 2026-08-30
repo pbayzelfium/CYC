@@ -423,14 +423,14 @@ function recolour(html, t) {
   return out;
 }
 
-/* The pre-rendered zelfium-<slug> variant only exists for themes that were
+/* The pre-rendered cyc-<slug> variant only exists for themes that were
    present when this page was built. A theme installed since is derived here
    instead, by recolouring the base prompt onto its palette - the same mapping
    used for every other design. */
 function pairedPrompt(t) {
-  const exact = byName["zelfium-" + t.slug];
+  const exact = byName["cyc-" + t.slug];
   if (exact) return exact.html;
-  const base = byName["zelfium"] || byName["zelfium-" + THEMES[0].slug];
+  const base = byName["cyc"] || byName["cyc-" + THEMES[0].slug];
   if (!base) return "";
   return base.html.replace(/#[0-9a-fA-F]{6}\b/g,
     m => adjustColour(mapColour(m.toLowerCase(), t), paired ? adjB : 0, paired ? adjS : 0));
@@ -538,7 +538,7 @@ function renderDesignStage() {
   fixContrast(dp, t);
   fitPrompt(dp);
   document.getElementById("designName").textContent =
-    sel.design ? sel.design : "zelfium — the matched prompt, shown until you pick another";
+    sel.design ? sel.design : "cyc — the matched prompt, shown until you pick another";
 }
 
 /* ---------- filters + grids ---------- */

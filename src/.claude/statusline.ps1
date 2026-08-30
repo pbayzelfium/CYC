@@ -31,7 +31,7 @@ try {
     $active = Join-Path $HOME '.oh-my-posh\active-theme.txt'
     if (Test-Path $active) {
         $leaf = Split-Path ((Get-Content $active -Raw).Trim()) -Leaf
-        if ($leaf -match '^zelfium-(.+)\.omp\.json$' -and
+        if ($leaf -match '^cyc-(.+)\.omp\.json$' -and
             $all.PSObject.Properties.Name -contains $Matches[1]) { $hit = $all.($Matches[1]) }
     }
 

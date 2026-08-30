@@ -33,9 +33,9 @@ FILES = [
 ]
 
 
-def zelfium_generic():
+def cyc_generic():
     """The custom prompt, minus this machine's personal folder shortcuts."""
-    cfg = json.loads((ROOT / "zelfium.omp.json").read_text(encoding="utf-8"))
+    cfg = json.loads((ROOT / "cyc.omp.json").read_text(encoding="utf-8"))
     for block in cfg.get("blocks", []):
         for seg in block.get("segments", []):
             seg.get("options", {}).pop("mapped_locations", None)
@@ -71,7 +71,7 @@ for src, dest, required in FILES:
         continue
     payload[dest] = (b64(src.read_text(encoding="utf-8")), required)
 
-payload[".oh-my-posh/zelfium.omp.json"] = (b64(zelfium_generic()), True)
+payload[".oh-my-posh/cyc.omp.json"] = (b64(cyc_generic()), True)
 payload["__profile__"] = (b64(profile_block()), True)
 
 

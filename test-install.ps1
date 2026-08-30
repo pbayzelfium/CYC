@@ -73,7 +73,7 @@ try {
     Write-Host "  Assertions" -ForegroundColor White
 
     # --- files landed -------------------------------------------------------
-    foreach ($f in '.oh-my-posh\palettes.json', '.oh-my-posh\zelfium.omp.json',
+    foreach ($f in '.oh-my-posh\palettes.json', '.oh-my-posh\cyc.omp.json',
                    '.oh-my-posh\pair-prompt.py', '.oh-my-posh\theme-tools.ps1',
                    '.oh-my-posh\build-variants.ps1', '.oh-my-posh\schemes.json',
                    '.claude\statusline.ps1', '.claude\commands\terminal-theme.md') {
@@ -105,13 +105,13 @@ try {
     $palettes = Get-Content (Join-Path $root '.oh-my-posh\palettes.json') -Raw | ConvertFrom-Json
     $slugs = @($palettes.PSObject.Properties.Name | Where-Object { $_ -notlike '_*' })
     Check "one prompt variant per palette ($($slugs.Count))" {
-        $made = @(Get-ChildItem (Join-Path $root '.oh-my-posh') -Filter 'zelfium-*.omp.json')
+        $made = @(Get-ChildItem (Join-Path $root '.oh-my-posh') -Filter 'cyc-*.omp.json')
         $made.Count -eq $slugs.Count }.GetNewClosure()
     Check "every palette names a scheme that exists" {
         $defs = (Get-Content (Join-Path $root '.oh-my-posh\schemes.json') -Raw | ConvertFrom-Json).name
         @($slugs | Where-Object { $defs -notcontains $palettes.$_.scheme }).Count -eq 0 }.GetNewClosure()
     Check "no personal folder shortcuts shipped" {
-        (Get-Content (Join-Path $root '.oh-my-posh\zelfium.omp.json') -Raw) -notmatch 'mapped_locations' }
+        (Get-Content (Join-Path $root '.oh-my-posh\cyc.omp.json') -Raw) -notmatch 'mapped_locations' }
 
     # --- running twice must not duplicate ------------------------------------
     # -Force: an existing install is left alone otherwise, which is the point

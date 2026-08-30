@@ -72,7 +72,7 @@ $checks = [ordered]@{
     'palettes written'      = Test-Path "$HOME\.oh-my-posh\palettes.json"
     'status line written'   = Test-Path "$HOME\.claude\statusline.ps1"
     'slash command written' = Test-Path "$HOME\.claude\commands\terminal-theme.md"
-    'variants generated'    = (@(Get-ChildItem "$HOME\.oh-my-posh" -Filter 'zelfium-*.omp.json' -EA SilentlyContinue).Count -ge 7)
+    'variants generated'    = (@(Get-ChildItem "$HOME\.oh-my-posh" -Filter 'cyc-*.omp.json' -EA SilentlyContinue).Count -ge 7)
     'profile written'       = Test-Path "$HOME\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
 }
 $bad = 0
@@ -84,7 +84,7 @@ foreach ($k in $checks.Keys) {
 Head "Does the prompt render?"
 $omp = "$HOME\.local\bin\oh-my-posh.exe"
 if (Test-Path $omp) {
-    foreach ($cfg in Get-ChildItem "$HOME\.oh-my-posh" -Filter 'zelfium-*.omp.json' -EA SilentlyContinue) {
+    foreach ($cfg in Get-ChildItem "$HOME\.oh-my-posh" -Filter 'cyc-*.omp.json' -EA SilentlyContinue) {
         $out = & $omp print primary --config $cfg.FullName --shell pwsh --plain
         if ($out) { Write-Host ("  PASS  " + $cfg.Name + "  ->  " + ($out -split "`n")[0].Trim()) -ForegroundColor Green }
         else      { Write-Host ("  FAIL  " + $cfg.Name + " rendered nothing") -ForegroundColor Red; $bad++ }

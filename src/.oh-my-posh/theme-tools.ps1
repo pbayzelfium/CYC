@@ -218,11 +218,11 @@ function Uninstall-TerminalTheme {
     if (-not ($palettes.PSObject.Properties.Name -contains $Slug)) {
         Write-Host "No theme with slug '$Slug'." -ForegroundColor Red; return
     }
-    if ((Get-TerminalTheme).Prompt -eq "zelfium-$Slug.omp.json") {
+    if ((Get-TerminalTheme).Prompt -eq "cyc-$Slug.omp.json") {
         Write-Host "'$Slug' is currently active — switch away first with  tt 1" -ForegroundColor Yellow; return
     }
     $palettes.PSObject.Properties.Remove($Slug)
     $palettes | ConvertTo-Json -Depth 12 | Set-Content $script:TT_Palettes -Encoding UTF8
-    Remove-Item (Join-Path $script:TT_Root "zelfium-$Slug.omp.json") -Force -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $script:TT_Root "cyc-$Slug.omp.json") -Force -ErrorAction SilentlyContinue
     Write-Host "Removed $Slug." -ForegroundColor Green
 }

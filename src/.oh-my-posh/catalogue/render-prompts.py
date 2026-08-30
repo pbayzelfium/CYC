@@ -251,11 +251,11 @@ def main():
     if track:
         print("scrubbing now-playing: %r" % track)
     items = []
-    files = [(ROOT / "zelfium.omp.json", "zelfium", "custom")]
+    files = [(ROOT / "cyc.omp.json", "cyc", "custom")]
     for slug in json.loads((ROOT / "palettes.json").read_text(encoding="utf-8")):
         if slug.startswith("_"):
             continue
-        files.append((ROOT / ("zelfium-%s.omp.json" % slug), "zelfium-%s" % slug, "paired"))
+        files.append((ROOT / ("cyc-%s.omp.json" % slug), "cyc-%s" % slug, "paired"))
     for f in sorted((ROOT / "themes").glob("*.omp.json")):
         files.append((f, f.name[: -len(".omp.json")], "stock"))
 

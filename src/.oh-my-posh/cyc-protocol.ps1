@@ -62,7 +62,7 @@ if ($args.ContainsKey('theme')) {
 $design = $null
 if ($args.ContainsKey('design') -and $args['design']) {
     $d = $args['design']
-    $ok = ($d -eq 'zelfium') -or
+    $ok = ($d -eq 'cyc') -or
           (Test-Path (Join-Path $root "themes\$d.omp.json")) -or
           (Test-Path (Join-Path $root "$d.omp.json"))
     if (-not $ok) { Fail "unknown design: $d" }

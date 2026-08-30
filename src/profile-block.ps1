@@ -6,7 +6,7 @@ $OutputEncoding           = [System.Text.Encoding]::UTF8
 $OmpRoot    = Join-Path $HOME '.oh-my-posh'
 $OmpThemes  = Join-Path $OmpRoot 'themes'
 $OmpActive  = Join-Path $OmpRoot 'active-theme.txt'
-$OmpDefault = Join-Path $OmpRoot 'zelfium.omp.json'
+$OmpDefault = Join-Path $OmpRoot 'cyc.omp.json'
 
 $env:POSH_THEMES_PATH = $OmpThemes
 
@@ -69,17 +69,17 @@ function Get-PoshTheme {
 function Get-PoshThemeList {
     <#  Names of every installed theme, plus the custom one. Every name returned
         here is accepted verbatim by Set-PoshTheme.  #>
-    $names = @('zelfium')
+    $names = @('cyc')
     $names += (Get-ChildItem $script:OmpThemes -Filter '*.omp.json' -ErrorAction SilentlyContinue |
                ForEach-Object { $_.Name -replace '\.omp\.json$', '' } | Sort-Object)
     $names
 }
 
 function Resolve-PoshTheme {
-    <#  Accepts an alias, a paired variant (zelfium-<slug>, which lives in the
+    <#  Accepts an alias, a paired variant (cyc-<slug>, which lives in the
         oh-my-posh root), a stock design (in themes\), or a literal path.  #>
     param([Parameter(Mandatory)][string]$Name)
-    if ($Name -in @('zelfium', 'default', 'custom')) { return $script:OmpDefault }
+    if ($Name -in @('cyc', 'default', 'custom')) { return $script:OmpDefault }
     foreach ($p in @(
         (Join-Path $script:OmpRoot   "$Name.omp.json"),
         (Join-Path $script:OmpThemes "$Name.omp.json")
@@ -132,7 +132,7 @@ function Set-PoshTheme {
     $p = Resolve-PoshTheme $Name
     if (-not $p) { Write-Host "No design named '$Name'. Try: Get-PoshThemeList" -ForegroundColor Red; return }
 
-    $base = (Split-Path $p -Leaf) -replace '\.omp\.json$', '' -replace '^zelfium-.*$', 'zelfium'
+    $base = (Split-Path $p -Leaf) -replace '\.omp\.json$', '' -replace '^cyc-.*$', 'cyc'
     Set-Content -Path $script:OmpBase -Value $base -Encoding UTF8
     Set-Content -Path $script:OmpAdjust -Value "$Brightness $Saturation" -Encoding UTF8
 
@@ -191,7 +191,7 @@ $script:OmpBase = Join-Path $OmpRoot 'active-design.txt'
 
 function Get-BaseDesign {
     <#  The prompt design in use, before it was recoloured to the theme.  #>
-    if (Test-Path $script:OmpBase) { (Get-Content $script:OmpBase -Raw).Trim() } else { 'zelfium' }
+    if (Test-Path $script:OmpBase) { (Get-Content $script:OmpBase -Raw).Trim() } else { 'cyc' }
 }
 
 function Get-ActiveThemeSlug {
@@ -225,7 +225,7 @@ function Get-PythonPath {
 
 function New-PairedPrompt {
     <#  Recolour a design to a theme and return the generated config path.
-        zelfium's variants are pre-built, and are used directly when no
+        cyc's variants are pre-built, and are used directly when no
         brightness or saturation tweak is in force.  #>
     param(
         [Parameter(Mandatory)][string]$Design,
@@ -233,10 +233,10 @@ function New-PairedPrompt {
         [double]$Brightness = 0,
         [double]$Saturation = 0
     )
-    if ($Design -in @('zelfium', 'default', 'custom') -and -not $Brightness -and -not $Saturation) {
-        return (Join-Path $script:OmpRoot "zelfium-$Slug.omp.json")
+    if ($Design -in @('cyc', 'default', 'custom') -and -not $Brightness -and -not $Saturation) {
+        return (Join-Path $script:OmpRoot "cyc-$Slug.omp.json")
     }
-    $src = if ($Design -in @('zelfium', 'default', 'custom')) { 'zelfium' } else { $Design }
+    $src = if ($Design -in @('cyc', 'default', 'custom')) { 'cyc' } else { $Design }
     $py = Get-PythonPath
     if (-not $py) { Write-Host 'Python not found - prompt recolouring needs it.' -ForegroundColor Red; return $null }
     $p = & $py (Join-Path $script:OmpRoot 'pair-prompt.py') $src $Slug $Brightness $Saturation 2>&1

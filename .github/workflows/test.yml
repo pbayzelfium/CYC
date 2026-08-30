@@ -79,7 +79,7 @@ jobs:
         shell: pwsh
         run: |
           $omp = "$HOME/.local/bin/oh-my-posh.exe"
-          foreach ($cfg in Get-ChildItem "$HOME/.oh-my-posh" -Filter 'zelfium-*.omp.json') {
+          foreach ($cfg in Get-ChildItem "$HOME/.oh-my-posh" -Filter 'cyc-*.omp.json') {
             $out = & $omp print primary --config $cfg.FullName --shell pwsh --plain
             if (-not $out) { Write-Error "$($cfg.Name) rendered nothing"; exit 1 }
           }

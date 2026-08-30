@@ -38,7 +38,7 @@ if ($env:USERNAME -eq 'pc') {
 Write-Host "  Files" -ForegroundColor DarkGray
 Check "oh-my-posh downloaded"   { Test-Path "$HOME\.local\bin\oh-my-posh.exe" }
 Check "design collection"       { @(Get-ChildItem "$HOME\.oh-my-posh\themes" -Filter *.omp.json -EA SilentlyContinue).Count -gt 50 }
-Check "prompt variants"         { @(Get-ChildItem "$HOME\.oh-my-posh" -Filter 'zelfium-*.omp.json' -EA SilentlyContinue).Count -ge 7 }
+Check "prompt variants"         { @(Get-ChildItem "$HOME\.oh-my-posh" -Filter 'cyc-*.omp.json' -EA SilentlyContinue).Count -ge 7 }
 Check "Claude status line"      { Test-Path "$HOME\.claude\statusline.ps1" }
 Check "slash command"           { Test-Path "$HOME\.claude\commands\terminal-theme.md" }
 Check "profile written"         { Test-Path $PROFILE }
@@ -118,7 +118,7 @@ $omp = "$HOME\.local\bin\oh-my-posh.exe"
 if (Test-Path $omp) {
     Check "every generated prompt renders" {
         $bad = 0
-        foreach ($c in Get-ChildItem "$HOME\.oh-my-posh" -Filter 'zelfium-*.omp.json') {
+        foreach ($c in Get-ChildItem "$HOME\.oh-my-posh" -Filter 'cyc-*.omp.json') {
             if (-not (& $omp print primary --config $c.FullName --shell pwsh --plain)) { $bad++ }
         }
         $bad -eq 0 }
