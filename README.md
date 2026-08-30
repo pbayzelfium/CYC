@@ -13,7 +13,8 @@ powershell -ExecutionPolicy Bypass -NoProfile -File "$env:TEMP\cyc-install.ps1"
 ```
 
 To see what it would do without changing anything, add `-DryRun` to the second line.
-If it is already installed and you are upgrading, add `-Force`.
+Already installed? You do not need this - run `Update-Cyc`, or press **Check for updates**
+in the catalogue. It keeps everything you set up. See [Updating](#updating).
 
 When it finishes, the theme catalogue opens in your browser by itself.
 
@@ -24,7 +25,7 @@ Because `irm <url> | iex` is the shape of a real attack technique - the one secu
 tells people never to run, and which Microsoft Defender flags by pattern. An installer that
 trips someone's antivirus reads as a virus regardless of what it actually does.
 
-So: no piping into `iex`, and **no encoded payload**. `install.ps1` is about 27 KB of readable
+So: no piping into `iex`, and **no encoded payload**. `install.ps1` is about <!--SIZE-->37<!--/SIZE--> KB of readable
 PowerShell that fetches its files as plain text from `src/` in this repo. It previously carried
 them as 531 KB of base64 - the other shape scanners flag, because that is what packed malware
 looks like.
@@ -50,7 +51,12 @@ and Node version - powerline segments in a Nerd Font.
 Dracula, Gruvbox Dark, Rose Pine). Switching one moves the window background, the 16 ANSI
 colours, the prompt and the status line together, so they never clash.
 
-**A catalogue you click.** Every prompt design rendered against the same repository, with
+**It keeps itself current.** It checks once a day on a new terminal, when you open the
+catalogue, and on demand from the catalogue's **Check for updates** button - one olive line
+that installs if there is something to install. An update replaces the program and keeps
+everything you chose.
+
+**A catalogue you click. Every prompt design rendered against the same repository, with
 filters, a full-size terminal preview, and brightness / saturation sliders. Pick what you want
 and press **Apply** - your terminal changes, with nothing to copy or paste. It opens itself when
 you install, and `catalogue` reopens it.
@@ -224,6 +230,8 @@ and what is still unproven.
 install.ps1            the installer: fetches src/ and configures everything
 install-template.ps1   its source, before the file manifest is substituted
 build-installer.py     reads the live files and emits install.ps1 + src/
+VERSION                the published version, and what the update check compares against
+bump-version.py        bumps it, carrying at 9: 1.3.9 becomes 1.4.0
 uninstall.ps1          removes what the installer added
 test-install.ps1       the assertions
 src/                   everything the installer writes, as plain files

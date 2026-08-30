@@ -14,14 +14,14 @@ Argument given: `$ARGUMENTS`
 
 ## Two layers, and they are not the same thing
 
-Peter has asked about this more than once, so lead with it whenever it is relevant.
+This gets asked more than once, so lead with it whenever it is relevant.
 
 | Layer | What it controls | How many | Command |
 |-------|------------------|----------|---------|
 | **Paired theme** | Window background, the 16 ANSI colours, the prompt, and this status line — moved together so nothing clashes | the keys in `palettes.json` | `/terminal-theme <slug>` |
 | **Prompt design** | The prompt line only: which segments appear, powerline vs diamond vs plain, icons, layout | the files in `themes/` | `/terminal-theme prompt <name>` |
 
-Never state either count from memory — Peter installs themes, so any number written here goes
+Never state either count from memory — themes get installed, so any number written here goes
 stale. Count them when you report.
 
 **Every design is recoloured to the active theme automatically.** Picking a design remaps its
@@ -165,6 +165,23 @@ Be accurate here — this is the part that looks broken if described wrong.
 
 Do not claim you have seen the window change colour. You cannot see his screen — say what was
 set and let him confirm.
+
+## Keeping it current
+
+CYC updates itself: once a day on a new terminal, when the catalogue is opened, and on
+demand from the catalogue's **Check for updates** button. Each shows one olive line and
+installs if there is something to install.
+
+```
+pwsh -NoLogo -Command "Test-CycUpdate"   # is there a newer build?
+pwsh -NoLogo -Command "Update-Cyc"       # install it
+```
+
+An update replaces the program and keeps what he set up — theme, prompt design, the
+brightness and saturation, the themes he installed, and any edit to the prompt config. The
+one thing it can move is a prompt design the new build no longer has, and it says so when
+that happens. Read the installed version from `~/.oh-my-posh/version.txt`; never state it
+from memory.
 
 ## Installing a new theme
 

@@ -34,7 +34,7 @@ function Update-TerminalThemeIndex {
     # per_page/page — asking for more pages just refetches the same list.
     $names = [System.Collections.Generic.List[string]]::new()
     try {
-        $r = Invoke-RestMethod $script:TT_Api -Headers @{ 'User-Agent' = 'trinity-theme-tools' }
+        $r = Invoke-RestMethod $script:TT_Api -Headers @{ 'User-Agent' = 'cyc-theme-tools' }
     } catch {
         Write-Host "Could not reach GitHub: $($_.Exception.Message)" -ForegroundColor Red
         return 0
@@ -88,7 +88,7 @@ function Install-TerminalTheme {
     # 1. fetch the canonical scheme
     $url = "$script:TT_Repo/$([uri]::EscapeDataString($Name)).json"
     try {
-        $s = Invoke-RestMethod $url -Headers @{ 'User-Agent' = 'trinity-theme-tools' }
+        $s = Invoke-RestMethod $url -Headers @{ 'User-Agent' = 'cyc-theme-tools' }
     } catch {
         Write-Host "No scheme called '$Name' in the collection." -ForegroundColor Red
         Write-Host "Search for the exact name with:  Find-TerminalTheme <part of the name>" -ForegroundColor Yellow

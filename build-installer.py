@@ -155,6 +155,17 @@ body = OUT.read_text(encoding="utf-8")
 assert "#__MANIFEST__" not in body
 assert "#__VERSION__" not in body, "version token survived - the update check would never fire"
 print(f"version {VERSION}")
+
+# The README states the installer's size as a reassurance that it carries no
+# payload, which makes it a number that must not drift. Two stale numbers turned
+# up in one audit today; this one cannot.
+readme = OUT.parent / "README.md"
+if readme.exists():
+    r = readme.read_text(encoding="utf-8")
+    r2 = re.sub(r"<!--SIZE-->\d+<!--/SIZE-->", f"<!--SIZE-->{round(kb)}<!--/SIZE-->", r)
+    if r2 != r:
+        readme.write_text(r2, encoding="utf-8")
+        print(f"README size -> {round(kb)} KB")
 assert len(body) < 60_000, "installer got big again - is something embedded?"
 print("manifest substituted")
 

@@ -766,6 +766,7 @@ Write-Host "    tt 3                     switch theme and prompt together"
 Write-Host "    Install-TerminalTheme    add any of 600+ schemes"
 Write-Host "    /terminal-theme          the same, from inside Claude Code"
 Write-Host "    catalogue                reopen the theme catalogue later"
+Write-Host "    Update-Cyc               install a newer build, keeping your setup"
 Write-Host ""
 Write-Host "  The catalogue just opened in your browser; 'catalogue' reopens it." -ForegroundColor DarkGray
 Write-Host "  Rebuild it only after adding a theme:" -ForegroundColor DarkGray
