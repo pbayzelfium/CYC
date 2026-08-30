@@ -116,6 +116,22 @@ they are general tools and something else may now depend on them.
 
 ## Updating
 
+### Installed before 1.1.0? One manual run, once
+
+Updating arrived in 1.1.0, so an install older than that has nothing on it that
+knows to look - it cannot pull a feature it does not have. Re-run the installer
+once and it is on the train for good:
+
+```powershell
+irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/install.ps1 -OutFile "$env:TEMP\cyc-install.ps1"
+powershell -ExecutionPolicy Bypass -NoProfile -File "$env:TEMP\cyc-install.ps1" -Update
+```
+
+`-Update`, not `-Force`: it keeps your theme, prompt design and installed themes.
+Then close every terminal window and open a new one.
+
+### After that
+
 It checks once a day, on a new terminal, against a six-byte `VERSION` file in this
 repository. When there is a newer build it says so and installs it:
 
