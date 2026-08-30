@@ -173,9 +173,8 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
     <code style="font-size:13.5px;color:var(--signal)">catalogue</code>
     <br><br>
     <span style="font-size:13.5px;color:var(--muted)">
-      It opened by itself when you installed. After adding a theme with
-      <code>Install-TerminalTheme</code>, this page will not show it until rebuilt:
-      <code>pwsh -NoProfile -File ~/.oh-my-posh/catalogue/rebuild.ps1</code>
+      It opened by itself when you installed, and refreshes itself whenever you add a
+      theme with <code>Install-TerminalTheme</code>.
     </span>
   </div>
 
@@ -375,8 +374,8 @@ function toHex(css) {
     ? "#" + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, "0")).join("")
     : null;
 }
-function fixContrast(root, t) {
-  if (!paired) return;
+function fixContrast(root, t, force) {
+  if (!paired && !force) return;
   const inks = [t.segFg, t.fg, t.bg].filter(Boolean);
   root.querySelectorAll("span[style]").forEach(el => {
     const bg = toHex(el.style.backgroundColor || ""), fg = toHex(el.style.color || "");
@@ -414,6 +413,19 @@ function recolour(html, t) {
     m => adjustColour(mapColour(m.toLowerCase(), t), b, s));
   htmlCache.set(key, out);
   return out;
+}
+
+/* The pre-rendered zelfium-<slug> variant only exists for themes that were
+   present when this page was built. A theme installed since is derived here
+   instead, by recolouring the base prompt onto its palette - the same mapping
+   used for every other design. */
+function pairedPrompt(t) {
+  const exact = byName["zelfium-" + t.slug];
+  if (exact) return exact.html;
+  const base = byName["zelfium"] || byName["zelfium-" + THEMES[0].slug];
+  if (!base) return "";
+  return base.html.replace(/#[0-9a-fA-F]{6}\b/g,
+    m => adjustColour(mapColour(m.toLowerCase(), t), paired ? adjB : 0, paired ? adjS : 0));
 }
 
 /* ---------- stages ---------- */
@@ -486,10 +498,10 @@ function fitPrompt(el) {
 function renderThemeStage() {
   const t = theme();
   dress("themeStage", "themeTabs", "themeTabOn", "themeBody", t);
-  const pair = byName["zelfium-" + t.slug];
   document.getElementById("themeSample").innerHTML = sample(t);
   const tp = document.getElementById("themePrompt");
-  tp.innerHTML = pair ? pair.html : "";
+  tp.innerHTML = pairedPrompt(t);
+  fixContrast(tp, t, true);
   fitPrompt(tp);
 
   const dim = shade(t.fg, -95), sep = `<span style="color:${dim}">  ·  </span>`;
@@ -511,10 +523,10 @@ function renderThemeStage() {
 function renderDesignStage() {
   const t = theme();
   dress("designStage", "designTabs", "designTabOn", "designBody", t);
-  const d = sel.design ? byName[sel.design] : byName["zelfium-" + t.slug];
+  const d = sel.design ? byName[sel.design] : null;
   document.getElementById("designSample").innerHTML = sample(t);
   const dp = document.getElementById("designPrompt");
-  dp.innerHTML = d ? recolour(d.html, t) : "";
+  dp.innerHTML = d ? recolour(d.html, t) : pairedPrompt(t);
   fixContrast(dp, t);
   fitPrompt(dp);
   document.getElementById("designName").textContent =
@@ -541,15 +553,15 @@ function renderThemes() {
   themeList = list;
 
   document.getElementById("themes").innerHTML = list.map(t => {
-    const pair = byName["zelfium-" + t.slug];
     return `<button class="card" data-slug="${t.slug}" aria-pressed="${t.slug === sel.theme}" aria-label="Choose ${t.scheme}">
       <div class="swatches">${ACCENTS.map(k => `<i style="background:${t[k]}"></i>`).join("")}</div>
-      <div class="prompt" style="background:${t.bg};color:${t.fg}">${pair ? pair.html : ""}</div>
+      <div class="prompt" style="background:${t.bg};color:${t.fg}">${pairedPrompt(t)}</div>
       <div class="cfoot"><span class="cname sans">${t.scheme}</span>
         <span class="tags">${t.traits.slice(0, 2).map(x => `<span>${x}</span>`).join("")}</span></div>
     </button>`;
   }).join("");
 
+  document.querySelectorAll("#themes .prompt").forEach((el, i) => fixContrast(el, list[i], true));
   document.getElementById("tcount").textContent = list.length + " / " + THEMES.length;
   document.getElementById("tempty").hidden = list.length > 0;
 

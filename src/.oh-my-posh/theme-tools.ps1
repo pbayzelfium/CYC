@@ -169,6 +169,27 @@ function Install-TerminalTheme {
     # 5. generate the prompt variant
     & (Join-Path $script:TT_Root 'build-variants.ps1') | Out-Null
 
+    # 6. refresh the catalogue so the new theme is actually in it. Only the
+    # data is re-embedded, which takes about a second - a full rebuild
+    # re-renders every design and is not needed, since adding a theme does not
+    # change any of them.
+    $builder = Join-Path $script:TT_Root 'catalogue\build-catalogue.py'
+    if (Test-Path $builder) {
+        $py = $null
+        foreach ($c in @((Join-Path $script:TT_Root 'catalogue\.venv\Scripts\python.exe'))) {
+            if (Test-Path $c) { $py = $c }
+        }
+        if (-not $py) {
+            $cmd = Get-Command python -ErrorAction SilentlyContinue
+            if ($cmd -and $cmd.Source -notlike '*WindowsApps*') { $py = $cmd.Source }
+        }
+        if ($py) {
+            & $py $builder 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { Write-Host "  catalogue refreshed" -ForegroundColor DarkGray }
+            else { Write-Host "  could not refresh the catalogue" -ForegroundColor Yellow }
+        }
+    }
+
     Write-Host ""
     Write-Host "  Installed $($s.name)" -ForegroundColor Green
     Write-Host "    slug        $Slug"
@@ -183,7 +204,7 @@ function Install-TerminalTheme {
     }
     Write-Host ""
     Write-Host "  Try it:  tt $Slug" -ForegroundColor DarkGray
-    Write-Host "  Add it to the catalogue:  pwsh -NoProfile -File `"$(Join-Path $script:TT_Root 'catalogue\rebuild.ps1')`"" -ForegroundColor DarkGray
+    Write-Host "  See it:  catalogue" -ForegroundColor DarkGray
     Write-Host ""
 }
 
