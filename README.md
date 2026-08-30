@@ -226,9 +226,15 @@ Nerd Font, so glyphs render on a machine that has never installed it.
 
 </details>
 
-## Credit
+## Licence
+
+MIT - see [LICENSE](LICENSE).
 
 Built on [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) by Jan De Dobbeleer, the
 [Nerd Fonts](https://www.nerdfonts.com/) project, and the colour schemes collected in
-[mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes).
-JetBrains Mono is under the SIL Open Font License 1.1; the Nerd Fonts patcher is MIT.
+[mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes) (MIT).
+
+Two things are redistributed rather than fetched, and carry their own licences in
+[licenses/](licenses/): seven colour scheme definitions, and a subset of JetBrains Mono
+embedded in the catalogue under the SIL Open Font License 1.1. Everything else - oh-my-posh,
+the font itself, PowerShell 7, Terminal-Icons - the installer fetches from its own publisher.
