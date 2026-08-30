@@ -89,6 +89,9 @@ jobs:
         run: |
           $v = (Get-Content VERSION -Raw).Trim()
           if ($v -notmatch '^\d+(\.\d+){1,3}$') { Write-Error "bad VERSION: '$v'"; exit 1 }
+          # Each component runs 0-9 and carries into the one above: 1.3.9 -> 1.4.0.
+          python bump-version.py --check
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           $i = Get-Content install.ps1 -Raw
           if ($i -match '__VERSION__') {
             Write-Error 'the version token was not substituted - the update check would never fire'
