@@ -92,6 +92,13 @@ if (-not (Get-Command Set-TerminalTheme -ErrorAction SilentlyContinue)) {
 }
 
 if ($theme)  { Set-TerminalTheme $theme | Out-Null; Note "theme -> $theme" }
+
+if (-not $design -and ($b -or $s)) {
+    # Sliders moved without picking a design: adjust the prompt already in use.
+    $design = Get-BaseDesign
+    Note "no design given, adjusting the current one: $design"
+}
+
 if ($design) {
     if ($original) { Set-PoshTheme $design -Original | Out-Null }
     else           { Set-PoshTheme $design -Brightness $b -Saturation $s | Out-Null }

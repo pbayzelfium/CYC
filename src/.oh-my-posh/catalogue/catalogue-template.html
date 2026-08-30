@@ -690,10 +690,12 @@ function applyUrl() {
   if (sel.design) {
     p.set("design", sel.design);
     if (!paired) p.set("mode", "original");
-    else {
-      if (adjB) p.set("b", adjB);
-      if (adjS) p.set("s", adjS);
-    }
+  }
+  // The sliders adjust the prompt, and there is always a prompt - the matched
+  // one when no design is picked. So they travel whether or not one is.
+  if (paired) {
+    if (adjB) p.set("b", adjB);
+    if (adjS) p.set("s", adjS);
   }
   return "cyc://apply?" + p.toString();
 }
