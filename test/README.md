@@ -89,6 +89,14 @@ one needs ten minutes and a sign-out.
 
 ## Results so far
 
+Four rounds on a clean Windows 11 Pro (Spanish) profile, plus CI on every push.
+
+**Round 4** - the parts only a person on a real install can exercise: the installer registering
+the `cyc://` handler, the catalogue opening by itself when the install finishes, and pressing
+**Apply** in the browser to change the terminal with no copying. All confirmed working.
+
+**Rounds 1-3** below.
+
 The clean-user test (4) has been run once on Windows 11 Pro, Spanish: **20 checks, 0 failures**,
 plus both eyeball checks. The font rendered immediately — **no reboot needed** — and `tt` repainted
 the open window rather than requiring a new tab.
