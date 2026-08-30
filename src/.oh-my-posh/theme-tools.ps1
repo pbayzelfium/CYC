@@ -159,12 +159,12 @@ function Install-TerminalTheme {
 
     $kept = @($wt.schemes | Where-Object { $_.name -ne $s.name })
     $wt.schemes = @($kept + [pscustomobject]$scheme)
-    $wt | ConvertTo-Json -Depth 32 | Set-Content $script:TT_Wt -Encoding UTF8
+    Save-JsonSafely -Object $wt -Path $script:TT_Wt
 
     # 4. add the palette
     $palettes = Get-Content $script:TT_Palettes -Raw | ConvertFrom-Json
     $palettes | Add-Member -NotePropertyName $Slug -NotePropertyValue ([pscustomobject]$palette) -Force
-    $palettes | ConvertTo-Json -Depth 12 | Set-Content $script:TT_Palettes -Encoding UTF8
+    Save-JsonSafely -Object $palettes -Path $script:TT_Palettes
 
     # 5. generate the prompt variant
     & (Join-Path $script:TT_Root 'build-variants.ps1') | Out-Null
@@ -222,7 +222,7 @@ function Uninstall-TerminalTheme {
         Write-Host "'$Slug' is currently active — switch away first with  tt 1" -ForegroundColor Yellow; return
     }
     $palettes.PSObject.Properties.Remove($Slug)
-    $palettes | ConvertTo-Json -Depth 12 | Set-Content $script:TT_Palettes -Encoding UTF8
+    Save-JsonSafely -Object $palettes -Path $script:TT_Palettes
     Remove-Item (Join-Path $script:TT_Root "cyc-$Slug.omp.json") -Force -ErrorAction SilentlyContinue
     Write-Host "Removed $Slug." -ForegroundColor Green
 }

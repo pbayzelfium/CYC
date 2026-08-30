@@ -29,6 +29,11 @@
 .PARAMETER NoOpen
   Do not open the theme catalogue in a browser when it finishes.
 
+.PARAMETER ResetTerminalSettings
+  Only relevant if your Windows Terminal settings file is already invalid, which
+  this cannot repair. Moves it aside, keeping a copy, so Windows Terminal writes
+  a fresh one and the theming can be applied.
+
 .PARAMETER Force
   Re-run over an existing install. Without this, an existing install is left
   alone: re-running replaces the prompt config with the shipped generic one,
@@ -50,6 +55,9 @@ param(
     [switch]$Force,
     # Do not open the catalogue at the end. Set automatically in tests and CI.
     [switch]$NoOpen,
+    # If Windows Terminal's settings file is already invalid, move it aside so
+    # Windows Terminal writes a fresh one, instead of skipping the theming.
+    [switch]$ResetTerminalSettings,
     # Where the payload comes from. Defaults to the published repo; point it at
     # a local checkout to install without network, which is what the tests do.
     [string]$Source,
@@ -69,6 +77,31 @@ $Offline = [bool]$TestRoot
 function Say  { param($m, $c = 'Gray') Write-Host "  $m" -ForegroundColor $c }
 function Step { param($m) Write-Host ""; Write-Host "> $m" -ForegroundColor Cyan }
 function Warn { param($m) Write-Host "  ! $m" -ForegroundColor Yellow; $script:Failed += $m }
+
+function Save-JsonSafely {
+    <#  Write $Object to $Path as JSON without any chance of leaving a partial
+        file. A truncated settings.json stops Windows Terminal from starting at
+        all, so the original is only replaced once a complete, re-parsed copy
+        exists on disk beside it.  #>
+    param(
+        [Parameter(Mandatory)]$Object,
+        [Parameter(Mandatory)][string]$Path
+    )
+
+    $json = $Object | ConvertTo-Json -Depth 32
+    if ([string]::IsNullOrWhiteSpace($json)) { throw "serialised to nothing" }
+
+    # prove it before it goes anywhere near the real file
+    $null = $json | ConvertFrom-Json
+
+    $tmp = "$Path.tmp"
+    [IO.File]::WriteAllText($tmp, $json, [Text.UTF8Encoding]::new($false))
+
+    # and prove what actually landed on disk, not just what we meant to write
+    $null = (Get-Content $tmp -Raw) | ConvertFrom-Json
+
+    Move-Item $tmp $Path -Force
+}
 
 function Backup {
     param([string]$Path)
@@ -445,8 +478,48 @@ if (-not (Test-Path $wtSettings)) { Say "skipped - not installed" DarkGray }
 elseif ($DryRun) { Say "would add 7 colour schemes and set the font, then merge in the appearance" }
 else {
     try {
+        $wtRaw = Get-Content $wtSettings -Raw
+
+        # Is it valid before we touch it? A broken settings.json is why Windows
+        # Terminal shows "Error al cargar configuracion" / "Failed to load
+        # settings" and runs on defaults - and it is not something this wrote.
+        $wtValid = $true
+        try { $null = $wtRaw | ConvertFrom-Json } catch { $wtValid = $false }
+
+        if (-not $wtValid) {
+            if ($ResetTerminalSettings) {
+                $aside = "$wtSettings.broken-" + (Get-Date -Format 'yyyyMMdd-HHmmss')
+                Move-Item $wtSettings $aside -Force
+                Say "your settings file was invalid - moved to $(Split-Path $aside -Leaf)" Yellow
+                Say "Windows Terminal will write a fresh one" DarkGray
+                $wtRaw = '{}'
+            } else {
+                Write-Host ""
+                Write-Host "  Your Windows Terminal settings file is not valid JSON." -ForegroundColor Yellow
+                Write-Host "  It was already broken before this ran - nothing here caused it." -ForegroundColor Yellow
+                Write-Host "  Windows Terminal is ignoring it and using defaults, which is why" -ForegroundColor Yellow
+                Write-Host "  it shows a 'failed to load settings' box when it starts." -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "  The prompt will still be installed. The colours cannot be," -ForegroundColor Yellow
+                Write-Host "  because there is no readable file to merge them into." -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "  Either fix the file yourself, or re-run with:" -ForegroundColor Yellow
+                Write-Host "    -ResetTerminalSettings" -ForegroundColor Cyan
+                Write-Host "  which moves it aside, keeping a copy, and lets Windows Terminal" -ForegroundColor Yellow
+                Write-Host "  write a fresh one." -ForegroundColor Yellow
+                Write-Host ""
+                Warn "Windows Terminal theming skipped: its settings file is invalid (see above)"
+                throw 'skip'
+            }
+        }
+
         Backup $wtSettings
-        $wt = Get-Content $wtSettings -Raw | ConvertFrom-Json
+        # PowerShell parses comments but cannot write them back, so a commented
+        # settings file comes out stripped. Say so rather than quietly doing it.
+        if ($wtRaw -match '(?m)^\s*//') {
+            Warn "your Windows Terminal settings contain comments; they cannot be preserved and will be dropped (the .bak keeps them)"
+        }
+        $wt = $wtRaw | ConvertFrom-Json
         $pal = Get-Content (Join-Path $Root '.oh-my-posh\palettes.json') -Raw | ConvertFrom-Json
 
         # colour schemes: replace ours by name, leave any others alone
@@ -478,9 +551,13 @@ else {
         $pwshProfile = $wt.profiles.list | Where-Object { $_.source -eq 'Windows.Terminal.PowershellCore' } | Select-Object -First 1
         if ($pwshProfile) { $wt | Add-Member defaultProfile $pwshProfile.guid -Force }
 
-        $wt | ConvertTo-Json -Depth 32 | Set-Content $wtSettings -Encoding UTF8
+        Save-JsonSafely -Object $wt -Path $wtSettings
         Say "appearance applied" DarkGray
-    } catch { Warn "could not update Windows Terminal settings: $($_.Exception.Message)" }
+    } catch {
+        if ($_.Exception.Message -ne 'skip') {
+            Warn "could not update Windows Terminal settings: $($_.Exception.Message)"
+        }
+    }
 }
 
 # --- 8. Claude Code status line --------------------------------------------
@@ -502,7 +579,7 @@ else {
             padding         = 0
             refreshInterval = 30
         }) -Force
-        $s | ConvertTo-Json -Depth 32 | Set-Content $claudeSettings -Encoding UTF8
+        Save-JsonSafely -Object $s -Path $claudeSettings
         Say "status line configured" DarkGray
     } catch { Warn "could not update Claude settings: $($_.Exception.Message)" }
 }

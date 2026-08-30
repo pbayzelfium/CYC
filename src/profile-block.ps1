@@ -175,6 +175,31 @@ Set-Alias gallery Show-PoshThemeGallery
 
 $script:WtSettings = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
 
+function Save-JsonSafely {
+    <#  Write $Object to $Path as JSON without any chance of leaving a partial
+        file. A truncated settings.json stops Windows Terminal from starting at
+        all, so the original is only replaced once a complete, re-parsed copy
+        exists on disk beside it.  #>
+    param(
+        [Parameter(Mandatory)]$Object,
+        [Parameter(Mandatory)][string]$Path
+    )
+
+    $json = $Object | ConvertTo-Json -Depth 32
+    if ([string]::IsNullOrWhiteSpace($json)) { throw "serialised to nothing" }
+
+    # prove it before it goes anywhere near the real file
+    $null = $json | ConvertFrom-Json
+
+    $tmp = "$Path.tmp"
+    [IO.File]::WriteAllText($tmp, $json, [Text.UTF8Encoding]::new($false))
+
+    # and prove what actually landed on disk, not just what we meant to write
+    $null = (Get-Content $tmp -Raw) | ConvertFrom-Json
+
+    Move-Item $tmp $Path -Force
+}
+
 function Get-ThemePalettes {
     <#  The palette table. Single source of truth for every paired theme —
         the prompt variants, the Claude Code status line and this switcher
@@ -359,7 +384,7 @@ function Set-TerminalTheme {
             return
         }
         $wt.profiles.defaults.colorScheme = $scheme
-        $wt | ConvertTo-Json -Depth 32 | Set-Content $script:WtSettings -Encoding UTF8
+        Save-JsonSafely -Object $wt -Path $script:WtSettings
     } catch {
         Write-Host "Could not update Windows Terminal settings: $_" -ForegroundColor Red
         return

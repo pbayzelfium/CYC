@@ -47,6 +47,31 @@ $Root = if ($TestRoot) { $TestRoot } else { $HOME }
 $ProfileFile = if ($TestRoot) { Join-Path $Root 'Documents\PowerShell\profile.ps1' } else { $PROFILE }
 $removed = 0
 
+function Save-JsonSafely {
+    <#  Write $Object to $Path as JSON without any chance of leaving a partial
+        file. A truncated settings.json stops Windows Terminal from starting at
+        all, so the original is only replaced once a complete, re-parsed copy
+        exists on disk beside it.  #>
+    param(
+        [Parameter(Mandatory)]$Object,
+        [Parameter(Mandatory)][string]$Path
+    )
+
+    $json = $Object | ConvertTo-Json -Depth 32
+    if ([string]::IsNullOrWhiteSpace($json)) { throw "serialised to nothing" }
+
+    # prove it before it goes anywhere near the real file
+    $null = $json | ConvertFrom-Json
+
+    $tmp = "$Path.tmp"
+    [IO.File]::WriteAllText($tmp, $json, [Text.UTF8Encoding]::new($false))
+
+    # and prove what actually landed on disk, not just what we meant to write
+    $null = (Get-Content $tmp -Raw) | ConvertFrom-Json
+
+    Move-Item $tmp $Path -Force
+}
+
 function Say  { param($m, $c = 'Gray') Write-Host "  $m" -ForegroundColor $c }
 function Step { param($m) Write-Host ""; Write-Host "> $m" -ForegroundColor Cyan }
 function Did  { param($m) Say $m DarkGray; $script:removed++ }
@@ -107,7 +132,7 @@ elseif ($RestoreBackup -and (Test-Path "$wt.bak")) {
             }
         }
         Did "reset the appearance defaults"
-        $j | ConvertTo-Json -Depth 32 | Set-Content $wt -Encoding UTF8
+        Save-JsonSafely -Object $j -Path $wt
         Say "your own schemes, profiles and keybindings were left alone" DarkGray
     } catch { Say "could not edit Windows Terminal settings: $($_.Exception.Message)" Yellow }
 }
@@ -122,7 +147,7 @@ else {
         $j = Get-Content $cs -Raw | ConvertFrom-Json
         if ($j.PSObject.Properties.Name -contains 'statusLine') {
             $j.PSObject.Properties.Remove('statusLine')
-            $j | ConvertTo-Json -Depth 32 | Set-Content $cs -Encoding UTF8
+            Save-JsonSafely -Object $j -Path $cs
             Did "removed the statusLine entry, kept the rest"
         } else { Say "no statusLine entry" DarkGray }
     } catch { Say "could not edit Claude settings: $($_.Exception.Message)" Yellow }
