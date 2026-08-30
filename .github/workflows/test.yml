@@ -154,7 +154,9 @@ jobs:
             'cyc://apply?theme=nord&design=;calc.exe',
             'cyc://apply?theme=nord&b=999',
             'cyc://apply?theme=not-a-real-theme',
-            'https://example.com/apply?theme=nord'
+            'https://example.com/apply?theme=nord',
+            'cyc://evil?theme=nord',
+            'cyc://?theme=nord'
           )
           foreach ($u in $bad) {
             pwsh -NoProfile -File $h $u -WhatIfOnly *> $null
@@ -164,3 +166,11 @@ jobs:
           pwsh -NoProfile -File $h 'cyc://apply?theme=nord&design=agnoster&b=-10' -WhatIfOnly *> $null
           if ($LASTEXITCODE -ne 0) { Write-Error "handler refused a valid url"; exit 1 }
           Write-Host "accepted a valid url"
+
+          # An update is the one action a dry run must not perform.
+          pwsh -NoProfile -File $h 'cyc://update' -WhatIfOnly *> $null
+          if ($LASTEXITCODE -ne 0) { Write-Error "handler refused cyc://update"; exit 1 }
+          if (Test-Path "$env:TEMP/cyc-update-run.ps1") {
+            Write-Error "cyc://update ran under -WhatIfOnly"; exit 1
+          }
+          Write-Host "cyc://update stayed a dry run"

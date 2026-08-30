@@ -47,6 +47,10 @@ if ($action -eq 'update') {
     $updater = Join-Path $root 'cyc-update.ps1'
     if (-not (Test-Path $updater)) { Fail 'the updater is not installed' }
 
+    # -WhatIfOnly has to mean it here too. Spawning the window and installing a
+    # build would be the one thing a dry run must never do.
+    if ($WhatIfOnly) { Note 'would check for updates, and install one if found'; exit 0 }
+
     $script = @"
 . '$updater'
 Write-Host ''
