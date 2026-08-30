@@ -17,28 +17,45 @@ jobs:
         shell: pwsh
         run: |
           $errs = $null
-          [System.Management.Automation.Language.Parser]::ParseFile(
-            "$PWD/install.ps1", [ref]$null, [ref]$errs) | Out-Null
-          if ($errs) { $errs | ForEach-Object { Write-Error $_.Message }; exit 1 }
-          Write-Host "clean parse"
+          foreach ($f in 'install.ps1', 'uninstall.ps1', 'test-install.ps1', 'cyc-protocol.ps1') {
+            $path = Join-Path $PWD $f
+            if (-not (Test-Path $path)) { $path = Join-Path $PWD "src/.oh-my-posh/$f" }
+            if (-not (Test-Path $path)) { Write-Error "missing $f"; exit 1 }
+            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errs) | Out-Null
+            if ($errs) { $errs | ForEach-Object { Write-Error "$f : $($_.Message)" }; exit 1 }
+            Write-Host "$f parses"
+          }
 
-      - name: Payloads decode
+      - name: Nothing that looks like a packer
+        shell: pwsh
+        run: |
+          # The installer used to carry its files as base64. That is the shape
+          # antivirus flags, so it now fetches plain text - and must stay that way.
+          $t = Get-Content install.ps1 -Raw
+          if ($t -match 'FromBase64String') { Write-Error "install.ps1 decodes base64 again"; exit 1 }
+          if ((Get-Item install.ps1).Length -gt 60kb) { Write-Error "install.ps1 got big - is something embedded?"; exit 1 }
+          if ($t -match 'irm\s+\S+\s*\|\s*iex') { Write-Error "install.ps1 pipes a download into iex"; exit 1 }
+          Write-Host "install.ps1 is $([math]::Round((Get-Item install.ps1).Length/1kb)) KB, nothing encoded"
+
+      - name: Every file the manifest names exists
         shell: pwsh
         run: |
           $t = Get-Content install.ps1 -Raw
-          $n = 0
-          [regex]::Matches($t, "(?s)'([^']+)' = @\{ core = \`$(?:true|false); b64 = @'\r?\n(.*?)\r?\n'@ \}") |
-            ForEach-Object {
-              [Text.Encoding]::UTF8.GetString(
-                [Convert]::FromBase64String(($_.Groups[2].Value -replace '\s',''))) | Out-Null
-              $n++
-            }
-          if ($n -lt 10) { Write-Error "only $n payloads found"; exit 1 }
-          Write-Host "$n payloads decoded"
+          $m = [regex]::Match($t, '(?s)\$Manifest = \[ordered\]@\{(.*?)\n\}')
+          if (-not $m.Success) { Write-Error "no manifest found"; exit 1 }
+          $n = 0; $bad = 0
+          foreach ($line in ($m.Groups[1].Value -split "`n")) {
+            if ($line -notmatch "'([^']+)'\s*=") { continue }
+            $dest = $Matches[1]; $n++
+            if (-not (Test-Path (Join-Path "src" $dest))) { Write-Error "manifest names a missing file: $dest"; $bad++ }
+          }
+          if ($n -lt 10) { Write-Error "only $n manifest entries"; exit 1 }
+          if ($bad) { exit 1 }
+          Write-Host "$n manifest entries, all present in src/"
 
       - name: Dry run changes nothing
         shell: pwsh
-        run: pwsh -NoProfile -File install.ps1 -DryRun
+        run: pwsh -NoProfile -File install.ps1 -DryRun -Source "$PWD/src"
 
       - name: Test suite
         shell: pwsh
@@ -47,9 +64,10 @@ jobs:
       - name: Real install into a clean profile
         shell: pwsh
         run: |
-          # The runner has no Windows Terminal, so that step warns and is
-          # skipped; everything else runs for real, including the downloads.
-          pwsh -NoProfile -File install.ps1 -SkipCatalogue -NoOpen
+          # -Source: install the code in this commit, not whatever main happens
+          # to serve. The runner has no Windows Terminal, so that step warns and
+          # is skipped; everything else runs for real, including the downloads.
+          pwsh -NoProfile -File install.ps1 -SkipCatalogue -NoOpen -Source "$PWD/src"
           if (-not (Test-Path "$HOME/.local/bin/oh-my-posh.exe")) {
             Write-Error "oh-my-posh was not installed"; exit 1
           }
@@ -81,3 +99,25 @@ jobs:
           $stray = @($used | Where-Object { $allowed -notcontains $_ })
           if ($stray.Count) { Write-Error "colours outside the palette: $($stray -join ', ')"; exit 1 }
           Write-Host "$($used.Count) colours, all inside the nord palette"
+
+      - name: The cyc:// handler refuses bad input
+        shell: pwsh
+        run: |
+          # A protocol handler is a way for a web page to reach this machine, so
+          # the refusals matter as much as the successes.
+          $h = "$HOME/.oh-my-posh/cyc-protocol.ps1"
+          $bad = @(
+            'cyc://apply?theme=../../evil',
+            'cyc://apply?theme=nord&design=;calc.exe',
+            'cyc://apply?theme=nord&b=999',
+            'cyc://apply?theme=not-a-real-theme',
+            'https://example.com/apply?theme=nord'
+          )
+          foreach ($u in $bad) {
+            pwsh -NoProfile -File $h $u -WhatIfOnly *> $null
+            if ($LASTEXITCODE -eq 0) { Write-Error "handler ACCEPTED: $u"; exit 1 }
+            Write-Host "refused: $u"
+          }
+          pwsh -NoProfile -File $h 'cyc://apply?theme=nord&design=agnoster&b=-10' -WhatIfOnly *> $null
+          if ($LASTEXITCODE -ne 0) { Write-Error "handler refused a valid url"; exit 1 }
+          Write-Host "accepted a valid url"
