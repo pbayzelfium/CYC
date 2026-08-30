@@ -40,10 +40,10 @@
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
-  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:108px}
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-top:var(--barh,86px);padding-bottom:48px}
 .wrap{max-width:1320px;margin:0 auto;padding:0 24px}
 
-.mast{padding:56px 0 8px}
+.mast{padding:34px 0 8px}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
 h1{font-size:clamp(30px,4.6vw,46px);line-height:1.05;font-weight:600;letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance}
 .lede{font-size:17px;color:var(--ink-soft);max-width:64ch;margin:0}
@@ -92,8 +92,9 @@ h2{font-size:12.5px;font-family:var(--mono);font-weight:500;letter-spacing:.14em
 .bar-cells i{width:6px;height:12px;border-radius:1px;display:block}
 
 /* ---------- filter bar ---------- */
-.filters{display:flex;gap:9px;flex-wrap:wrap;align-items:center;
-  padding:11px 0;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge)}
+.filters{display:flex;gap:9px;flex-wrap:wrap;align-items:center;position:sticky;top:var(--barh,86px);
+  z-index:20;background:var(--ground);padding:11px 0;border-top:1px solid var(--edge);
+  border-bottom:1px solid var(--edge)}
 .search{flex:1 1 200px;min-width:160px;font:inherit;font-size:14px;padding:8px 12px;border-radius:7px;
   border:1px solid var(--edge);background:var(--panel);color:var(--ink)}
 .search:focus{outline:2px solid var(--accent);outline-offset:-1px}
@@ -137,7 +138,8 @@ h2{font-size:12.5px;font-family:var(--mono);font-weight:500;letter-spacing:.14em
 .empty{color:var(--muted);padding:30px 0;font-size:15px}
 
 /* ---------- command bar ---------- */
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--edge)}
+.bar{position:fixed;left:0;right:0;top:0;z-index:40;background:var(--panel);border-bottom:1px solid var(--edge);
+  box-shadow:0 1px 12px -6px rgba(0,0,0,.5)}
 .bar-in{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .picked{flex:1 1 300px;min-width:0;font-size:13.5px;color:var(--ink-soft)}
 .picked b{color:var(--ink);font-weight:500}
@@ -160,11 +162,26 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
 <script id="THEMES" type="application/json">__THEMES__</script>
 <script id="DESIGNS" type="application/json">__DESIGNS__</script>
 
+<div class="bar">
+  <div class="bar-in">
+    <div class="picked">
+      <div id="pickedText"></div>
+      <div class="cmds" id="pickedCmds"></div>
+      <div class="applyhint" id="applyHint" hidden>Applied. The window repaints now; the prompt appears in your next terminal.</div>
+    </div>
+    <div class="actions">
+      <button class="ghost" id="clear" type="button">Reset</button>
+      <button class="ghost" id="copy" type="button" title="Copy the equivalent commands instead">Copy</button>
+      <button class="go" id="apply" type="button">Apply</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <header class="mast">
     <p class="eyebrow" id="eyebrow"></p>
     <h1>Theme Catalogue</h1>
-    <p class="lede">Every design rendered against the same short git repository, so what differs between these is the design and not the context. Pick a theme, pick a prompt, copy the commands. The settings behind them live in the <a href="https://claude.ai/code/artifact/b249684e-4846-4ca4-9487-4770ef534887">Terminal Control Room</a>.</p>
+    <p class="lede">Every design rendered against the same short git repository, so what differs between these is the design and not the context. Pick a theme, pick a prompt, press Apply. The settings behind them live in the <a href="https://claude.ai/code/artifact/b249684e-4846-4ca4-9487-4770ef534887">Terminal Control Room</a>.</p>
   </header>
 
   <div class="note">
@@ -266,20 +283,6 @@ button.go:focus-visible,button.ghost:focus-visible{outline:2px solid var(--accen
   </div>
 </div>
 
-<div class="bar">
-  <div class="bar-in">
-    <div class="picked">
-      <div id="pickedText"></div>
-      <div class="cmds" id="pickedCmds"></div>
-      <div class="applyhint" id="applyHint" hidden>Applied. The window repaints now; the prompt appears in your next terminal.</div>
-    </div>
-    <div class="actions">
-      <button class="ghost" id="clear" type="button">Reset</button>
-      <button class="ghost" id="copy" type="button" title="Copy the equivalent commands instead">Copy</button>
-      <button class="go" id="apply" type="button">Apply</button>
-    </div>
-  </div>
-</div>
 
 <script>
 const THEMES  = JSON.parse(document.getElementById("THEMES").textContent);
@@ -757,7 +760,16 @@ makeChips("chips", DESIGN_FILTERS, dActive, renderDesigns);
 document.getElementById("tq").addEventListener("input", renderThemes);
 document.getElementById("q").addEventListener("input", renderDesigns);
 
+/* The bar is fixed, so the page needs a matching offset. Its height changes
+   with what is selected, so measure rather than assume. */
+function syncBarHeight() {
+  const h = document.querySelector(".bar").getBoundingClientRect().height;
+  document.documentElement.style.setProperty("--barh", Math.ceil(h) + "px");
+}
+
 renderThemeStage(); renderDesignStage(); renderThemes(); renderDesigns(); renderBar();
+syncBarHeight();
+new ResizeObserver(syncBarHeight).observe(document.querySelector(".bar"));
 
 // the fit depends on available width, so redo it when the window changes
 let resizeTimer;
