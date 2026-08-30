@@ -80,7 +80,7 @@ $script:Failed = @()
 
 # Stamped in by build-installer.py from the repo's VERSION file, and written to
 # ~/.oh-my-posh/version.txt so a later run can tell what is already here.
-$CycVersion = '1.2.0'
+$CycVersion = '1.2.1'
 
 # Files that stop being ours the moment the program is used. palettes.json is
 # the record of which themes someone installed; cyc.omp.json is the prompt they

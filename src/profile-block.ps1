@@ -171,6 +171,15 @@ function Show-Catalogue {
                 # -NoOpen: the page is opened below, once, either way.
                 Update-Cyc -NoOpen
             }
+            elseif ($u.Reachable) {
+                # Say it even when there is nothing to say. A silent check and a
+                # broken one look identical, which is how a dead updater went
+                # unnoticed once already.
+                Write-Host "  CYC $($u.Current) - up to date" -ForegroundColor DarkGray
+            }
+            else {
+                Write-Host "  (could not check for updates)" -ForegroundColor DarkGray
+            }
         } catch {
             # Never block the catalogue over an update - but do not hide it
             # either. A silent catch here is what let a broken updater look

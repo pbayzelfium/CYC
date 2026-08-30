@@ -111,6 +111,7 @@ jobs:
           # From src, not $HOME: this runs before the install step, so the
           # updater is not in place yet and the block's own load of it is a
           # no-op here.
+          $env:CYC_NO_UPDATE_CHECK = '1'   # loading the block must not install
           . ./src/.oh-my-posh/cyc-update.ps1
           . ./src/profile-block.ps1
 

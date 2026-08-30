@@ -172,6 +172,11 @@ function Invoke-CycUpdateCheck {
 
     if (-not $Force) {
         if (Test-Path $script:CycOptOut) { return }
+        # Loading the profile block is how anything tests it, and this runs at
+        # load. Without these two, reading the code installs a build - which is
+        # exactly what happened, twice.
+        if ($env:CI) { return }
+        if ($env:CYC_NO_UPDATE_CHECK) { return }
         if ($Host.Name -ne 'ConsoleHost') { return }
         if (-not [Environment]::UserInteractive) { return }
 
