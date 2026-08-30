@@ -429,9 +429,23 @@ function recolour(html, t) {
    present when this page was built. A theme installed since is derived here
    instead, by recolouring the base prompt onto its palette - the same mapping
    used for every other design. */
+function adjustOnly(html) {
+  /* The pre-rendered cyc-<slug> variant is already in the theme's palette, so
+     it needs the brightness and saturation applied but NOT the palette mapping
+     - re-mapping an already-mapped colour would move it a second time. Without
+     this the sliders reached every design except the one shown by default. */
+  if (!paired || (!adjB && !adjS)) return html;
+  const key = ["adj", adjB, adjS, html.length, html.slice(0, 40)].join("|");
+  if (htmlCache.has(key)) return htmlCache.get(key);
+  const out = html.replace(/#[0-9a-fA-F]{6}\b/g,
+    m => adjustColour(m.toLowerCase(), adjB, adjS));
+  htmlCache.set(key, out);
+  return out;
+}
+
 function pairedPrompt(t) {
   const exact = byName["cyc-" + t.slug];
-  if (exact) return exact.html;
+  if (exact) return adjustOnly(exact.html);
   const base = byName["cyc"] || byName["cyc-" + THEMES[0].slug];
   if (!base) return "";
   return base.html.replace(/#[0-9a-fA-F]{6}\b/g,

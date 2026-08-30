@@ -169,6 +169,20 @@ if readme.exists():
 assert len(body) < 60_000, "installer got big again - is something embedded?"
 print("manifest substituted")
 
+# A stray control byte is invisible in every editor and diff, and silently kills
+# whatever it lands in: a backspace written into a regex instead of \b made a
+# slider stop working, and looked correct in the source. Nothing shipped may
+# carry one.
+_CTRL = {0: "NUL", 7: "bell", 8: "backspace", 11: "vtab", 12: "formfeed", 27: "ESC"}
+for _dest, (_data, _req) in payload.items():
+    _text = base64.b64decode(_data).decode("utf-8")
+    for _code, _name in _CTRL.items():
+        if _code == 27:
+            continue  # ANSI colour sequences are deliberate in the shell scripts
+        if chr(_code) in _text:
+            raise SystemExit(f"{_dest} contains a {_name} control byte - it will fail silently")
+print("no stray control bytes in the payload")
+
 # Also emit the payload as plain files. install.ps1 is a base64 blob nobody
 # should run unread; src/ is the same content, reviewable, and generated from
 # the same source so the two cannot disagree.
