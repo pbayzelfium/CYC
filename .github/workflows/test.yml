@@ -49,7 +49,7 @@ jobs:
         run: |
           # The runner has no Windows Terminal, so that step warns and is
           # skipped; everything else runs for real, including the downloads.
-          pwsh -NoProfile -File install.ps1 -SkipCatalogue
+          pwsh -NoProfile -File install.ps1 -SkipCatalogue -NoOpen
           if (-not (Test-Path "$HOME/.local/bin/oh-my-posh.exe")) {
             Write-Error "oh-my-posh was not installed"; exit 1
           }

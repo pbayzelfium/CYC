@@ -26,6 +26,9 @@
   Do not install the catalogue builder sources. The pre-built catalogue is
   installed either way.
 
+.PARAMETER NoOpen
+  Do not open the theme catalogue in a browser when it finishes.
+
 .PARAMETER Force
   Re-run over an existing install. Without this, an existing install is left
   alone: re-running replaces the prompt config with the shipped generic one,
@@ -45,6 +48,8 @@ param(
     [switch]$DryRun,
     [switch]$SkipCatalogue,
     [switch]$Force,
+    # Do not open the catalogue at the end. Set automatically in tests and CI.
+    [switch]$NoOpen,
     # Where the payload comes from. Defaults to the published repo; point it at
     # a local checkout to install without network, which is what the tests do.
     [string]$Source,
@@ -531,6 +536,23 @@ else {
 }
 
 # --- done -------------------------------------------------------------------
+# --- 11. show them what they just installed --------------------------------
+# The point of the catalogue is being seen. Waiting for someone to think to
+# type 'catalogue' means most people never find it.
+$page = Join-Path $Root '.oh-my-posh\catalogue\theme-catalogue.html'
+if ($DryRun) { Step "Catalogue"; Say "would open $page in your browser" }
+elseif ($NoOpen -or $Offline -or $env:CI) { }
+elseif (Test-Path $page) {
+    Step "Opening the catalogue"
+    try {
+        Start-Process $page
+        Say "opened in your browser - every prompt design, with previews" DarkGray
+    } catch {
+        Say "could not open a browser. Open it yourself:" Yellow
+        Say "  $page" DarkGray
+    }
+}
+
 Write-Host ""
 if ($script:Failed.Count) {
     Write-Host "  Finished with $($script:Failed.Count) warning(s):" -ForegroundColor Yellow
@@ -546,9 +568,9 @@ Write-Host "    tts                      the theme menu, with colour swatches"
 Write-Host "    tt 3                     switch theme and prompt together"
 Write-Host "    Install-TerminalTheme    add any of 600+ schemes"
 Write-Host "    /terminal-theme          the same, from inside Claude Code"
-Write-Host "    catalogue                open the theme catalogue in your browser"
+Write-Host "    catalogue                reopen the theme catalogue later"
 Write-Host ""
-Write-Host "  The catalogue ships pre-built - 'catalogue' opens it." -ForegroundColor DarkGray
+Write-Host "  The catalogue just opened in your browser; 'catalogue' reopens it." -ForegroundColor DarkGray
 Write-Host "  Rebuild it only after adding a theme:" -ForegroundColor DarkGray
 Write-Host "    pwsh -NoProfile -File ~/.oh-my-posh/catalogue/rebuild.ps1"
 Write-Host ""

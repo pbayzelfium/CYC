@@ -66,7 +66,7 @@ try {
 
     # --- run it -------------------------------------------------------------
     Write-Host ""
-    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -Source (Join-Path $PSScriptRoot 'src') *>&1 |
+    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -NoOpen -Source (Join-Path $PSScriptRoot 'src') *>&1 |
         Where-Object { $_ -match 'warning|WARN|!' } | ForEach-Object { Write-Host "  installer: $_" -ForegroundColor Yellow }
 
     Write-Host ""
@@ -115,7 +115,7 @@ try {
 
     # --- running twice must not duplicate ------------------------------------
     # -Force: an existing install is left alone otherwise, which is the point
-    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -Force -Source (Join-Path $PSScriptRoot 'src') *>&1 | Out-Null
+    & pwsh -NoProfile -File $Installer -TestRoot $root -SkipCatalogue -Force -NoOpen -Source (Join-Path $PSScriptRoot 'src') *>&1 | Out-Null
     Check "second run does not duplicate the profile block" {
         ([regex]::Matches((Get-Content $profileFile -Raw), 'terminal-theme setup >>>').Count) -eq 1 }
     Check "second run does not duplicate schemes" {
