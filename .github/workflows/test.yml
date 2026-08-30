@@ -108,6 +108,10 @@ jobs:
           # resolved to itself and stopped existing - and the catch around the
           # check swallowed the error, leaving a broken updater looking exactly
           # like an up-to-date one. Assert the order, not the intention.
+          # From src, not $HOME: this runs before the install step, so the
+          # updater is not in place yet and the block's own load of it is a
+          # no-op here.
+          . ./src/.oh-my-posh/cyc-update.ps1
           . ./src/profile-block.ps1
 
           if ((Get-Command Update-Cyc).CommandType -ne 'Function') {
