@@ -129,18 +129,21 @@ def catalogue_page():
 
 payload[".oh-my-posh/catalogue/theme-catalogue.html"] = (b64(catalogue_page()), True)
 
+# A manifest, not a payload: the installer fetches these as plain files.
 blob = "\n".join(
-    f"  '{dest}' = @{{ core = ${'true' if req else 'false'}; b64 = @'\n{chunks(data)}\n'@ }}"
-    for dest, (data, req) in payload.items())
+    f"  '{dest}' = ${'true' if req else 'false'}"
+    for dest, (_data, req) in payload.items() if dest != "__profile__")
 
 TEMPLATE = (ROOT / "share" / "install-template.ps1").read_text(encoding="utf-8")
 OUT.parent.mkdir(parents=True, exist_ok=True)
-OUT.write_text(TEMPLATE.replace("#__PAYLOAD__", blob), encoding="utf-8")
+OUT.write_text(TEMPLATE.replace("#__MANIFEST__", blob), encoding="utf-8")
 
 kb = OUT.stat().st_size / 1024
 print(f"wrote {OUT}  ({kb:.0f} KB, {len(payload)} files)")
-assert "#__PAYLOAD__" not in OUT.read_text(encoding="utf-8")
-print("payload substituted")
+body = OUT.read_text(encoding="utf-8")
+assert "#__MANIFEST__" not in body
+assert len(body) < 60_000, "installer got big again - is something embedded?"
+print("manifest substituted")
 
 # Also emit the payload as plain files. install.ps1 is a base64 blob nobody
 # should run unread; src/ is the same content, reviewable, and generated from

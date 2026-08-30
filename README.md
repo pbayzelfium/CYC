@@ -1,45 +1,41 @@
-# CYC — Customize Your Claude
+# CYC - Customize Your Claude
 
-One command turns a bare Windows Terminal into a themed one, with a prompt, matched colour
-schemes, and a Claude Code status line that follows whichever theme is active.
+Turns a bare Windows Terminal into a themed one, with a prompt, matched colour schemes, and a
+Claude Code status line that follows whichever theme is active.
 
 ## Install
 
-Paste this into **any** Windows terminal. It fetches everything and installs it:
+**Download it, then run it.** Two steps on purpose - see the note below.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/bootstrap.ps1 | iex"
+irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/install.ps1 -OutFile "$env:TEMP\cyc-install.ps1"
+powershell -ExecutionPolicy Bypass -NoProfile -File "$env:TEMP\cyc-install.ps1"
 ```
 
-See what it would do first, changing nothing:
-
-```powershell
-powershell -ExecutionPolicy Bypass -Command "$env:CYC_DRYRUN=1; irm https://raw.githubusercontent.com/pbayzelfium/CYC/main/bootstrap.ps1 | iex"
-```
-
-Already installed and want to upgrade: set `$env:CYC_FORCE=1` the same way. It refuses to
-overwrite an existing install otherwise, because re-running replaces the prompt config and
-would lose any edits you made to it.
+To see what it would do without changing anything, add `-DryRun` to the second line.
+If it is already installed and you are upgrading, add `-Force`.
 
 <details>
-<summary>Why the command looks like that</summary>
+<summary>Why not a one-line <code>irm | iex</code>?</summary>
 
-`powershell`, not `pwsh` — `powershell` is on every Windows, while `pwsh` is one of the things
+Because `irm <url> | iex` is the shape of a real attack technique - the one security guidance
+tells people never to run, and which Microsoft Defender flags by pattern. An installer that
+trips someone's antivirus reads as a virus regardless of what it actually does.
+
+So: no piping into `iex`, and **no encoded payload**. `install.ps1` is about 26 KB of readable
+PowerShell that fetches its files as plain text from `src/` in this repo. It previously carried
+them as 531 KB of base64 - the other shape scanners flag, because that is what packed malware
+looks like.
+
+Every line of what gets installed is readable before you run it: `install.ps1` itself, and the
+files it fetches under [src/](https://github.com/pbayzelfium/CYC/tree/main/src).
+
+`powershell`, not `pwsh` - `powershell` is on every Windows, while `pwsh` is one of the things
 this installs. Once running, it installs PowerShell 7 and restarts itself there.
+`-ExecutionPolicy Bypass` is needed because Windows blocks downloaded scripts by default.
 
-`-ExecutionPolicy Bypass` — Windows blocks downloaded scripts by default.
-
-The bootstrap is a small script that downloads `install.ps1` to a file and runs it. That extra
-hop is not decoration: `install.ps1` restarts itself in PowerShell 7 using `$PSCommandPath`,
-which is empty when a script is piped, so piping it straight in would break at the handover.
-
-**Prefer not to pipe from the internet?** Reasonable. Download
-[install.ps1](https://raw.githubusercontent.com/pbayzelfium/CYC/main/install.ps1), read it — `src/` in this repo holds the same payload as plain
-files rather than base64 — then run:
-
-```powershell
-powershell -ExecutionPolicy Bypass -NoProfile -File install.ps1
-```
+**Installing without internet access**, or from a checkout: pass `-Source <dir>` pointing at a
+copy of `src/`.
 
 </details>
 

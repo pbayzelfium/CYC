@@ -45,6 +45,10 @@ param(
     [switch]$DryRun,
     [switch]$SkipCatalogue,
     [switch]$Force,
+    # Where the payload comes from. Defaults to the published repo; point it at
+    # a local checkout to install without network, which is what the tests do.
+    [string]$Source,
+    [string]$BaseUrl = 'https://raw.githubusercontent.com/pbayzelfium/CYC/main/src',
     # Testing seam: install into a throwaway directory instead of the real
     # home, and skip the network steps. See test-install.ps1.
     [string]$TestRoot
@@ -69,20 +73,36 @@ function Backup {
     }
 }
 
+function Get-PayloadFile {
+    <#  Fetch one file from the repo, or copy it from -Source. Plain text over
+        https, nothing encoded: a script carrying a large base64 blob is the
+        shape packers have, and scanners flag it on sight.  #>
+    param([string]$Dest)
+    if ($Source) {
+        $from = Join-Path $Source $Dest
+        if (-not (Test-Path $from)) { throw "not in -Source: $Dest" }
+        return [IO.File]::ReadAllText($from)
+    }
+    $url = "$BaseUrl/$($Dest -replace '\\','/')"
+    (Invoke-WebRequest -UseBasicParsing -Uri $url -Headers @{ 'User-Agent' = 'cyc-installer' }).Content
+}
+
 function Write-Payload {
-    param([string]$Dest, [string]$B64)
+    param([string]$Dest)
     $full = Join-Path $Root $Dest
     if ($DryRun) { Say "would write $Dest"; return }
     $dir = Split-Path $full -Parent
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
+    $text = Get-PayloadFile $Dest
     Backup $full
-    [IO.File]::WriteAllText($full, [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($B64)))
+    [IO.File]::WriteAllText($full, $text)
     Say "wrote $Dest" DarkGray
 }
 
 # ---------------------------------------------------------------------------
-$Payload = @{
-#__PAYLOAD__
+# What to install, and whether it is core (installed even with -SkipCatalogue).
+$Manifest = [ordered]@{
+#__MANIFEST__
 }
 # ---------------------------------------------------------------------------
 
@@ -369,15 +389,16 @@ else {
 
 # --- 5. files ---------------------------------------------------------------
 Step "Writing configuration"
-foreach ($k in $Payload.Keys) {
+foreach ($k in $Manifest.Keys) {
     if ($k -eq '__profile__') { continue }
-    if ($SkipCatalogue -and -not $Payload[$k].core) { Say "skipped $k (catalogue builder)" DarkGray; continue }
-    Write-Payload $k $Payload[$k].b64
+    if ($SkipCatalogue -and -not $Manifest[$k]) { Say "skipped $k (catalogue builder)" DarkGray; continue }
+    try { Write-Payload $k }
+    catch { Warn "could not fetch $k : $($_.Exception.Message)" }
 }
 
 # --- 6. profile -------------------------------------------------------------
 Step "PowerShell profile"
-$block = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Payload['__profile__'].b64))
+$block = Get-PayloadFile 'profile-block.ps1'
 $marker = '# >>> terminal-theme setup >>>'
 $endmk  = '# <<< terminal-theme setup <<<'
 
